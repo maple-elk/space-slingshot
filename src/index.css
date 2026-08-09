@@ -827,26 +827,41 @@ body {
 .drawer-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 16px 20px 24px;
 }
 
 .config-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.config-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .section-header {
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #cbd5e1;
-  padding-bottom: 4px;
+  color: var(--color-accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 2px;
 }
 
-.toggle-grid {
+.toggle-grid,
+.dense-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .toggle-card {
@@ -861,14 +876,26 @@ body {
   transition: background 0.15s ease;
 }
 
+.toggle-card.dense {
+  padding: 7px 10px;
+  gap: 10px;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.45);
+}
+
 .toggle-card:hover {
   background: rgba(30, 41, 59, 0.9);
 }
 
 .toggle-title {
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: #f8fafc;
+}
+
+.toggle-card.dense .toggle-title {
+  font-size: 0.82rem;
+  line-height: 1.25;
 }
 
 .toggle-sub {
@@ -877,12 +904,19 @@ body {
   margin-top: 2px;
 }
 
+.toggle-card.dense .toggle-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 1px;
+  line-height: 1.15;
+}
+
 .slider-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
   background: rgba(30, 41, 59, 0.4);
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-bg-card-border);
 }
@@ -900,10 +934,11 @@ body {
   margin-top: 4px;
 }
 
-.toggle-list {
+.toggle-list,
+.dense-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .toggle-row {
@@ -917,6 +952,11 @@ body {
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-bg-card-border);
+}
+
+.toggle-row.dense {
+  padding: 7px 10px;
+  font-size: 0.81rem;
 }
 
 @media (max-width: 768px) {
