@@ -28,7 +28,7 @@ export function SlingshotConfigDrawer({
 
   const handleToggleObject = (key, value) => {
     dispatch({ type: 'SET_SETTING', key, value });
-    handleNewLevel({ ...level, [key]: value });
+    handleNewLevel({ [key]: value });
   };
 
   return (

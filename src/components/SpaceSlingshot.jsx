@@ -86,7 +86,7 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
   const handleNewLevel = useCallback(
     (customConfig) => {
       const bScale = customConfig?.boardScale !== undefined ? customConfig.boardScale : boardScale;
-      const cfg = customConfig || {
+      const cfg = {
         planetCount,
         massMult,
         boardScale: bScale,
@@ -97,6 +97,7 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
         enableBoosters,
         enableShields,
         enableEnemyShip,
+        ...customConfig,
       };
 
       const newLvl = generateRandomLevel(960, 600, cfg);
