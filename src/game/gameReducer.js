@@ -159,6 +159,7 @@ export function gameReducer(state, action) {
         level: updatedEnemyShip
           ? { ...state.level, enemyShip: updatedEnemyShip }
           : state.level,
+        enemyTrail: (updatedEnemyShip && updatedEnemyShip.status === 'disabled') ? [] : state.enemyTrail,
       };
     }
 
@@ -195,7 +196,7 @@ export function gameReducer(state, action) {
         enemyAimInfo: null,
         enemyProjectilePos: null,
         enemyProjectileVel: null,
-        enemyTrail: [],
+        enemyTrail: (state.level.enemyShip && state.level.enemyShip.status === 'active') ? state.enemyTrail : [],
         roundCompleted: action.status === 'hit_player',
         showEndSummary: action.status === 'hit_player',
       };

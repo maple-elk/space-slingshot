@@ -99,4 +99,39 @@ describe('Game State Reducer', () => {
     expect(nextState.pastTrails[0].points).toEqual(activeFlightState.trail);
     expect(nextState.trail).toEqual([]);
   });
+
+  it('retains enemyTrail on END_ENEMY_SHOT if enemy ship is active', () => {
+    const enemyState = {
+      ...initialGameState,
+      level: {
+        ...initialGameState.level,
+        enemyShip: { id: 'e1', status: 'active', x: 800, y: 200, radius: 20 },
+      },
+      enemyTrail: [{ x: 800, y: 200 }, { x: 500, y: 250 }, { x: 150, y: 300 }],
+    };
+
+    const nextState = gameReducer(enemyState, { type: 'END_ENEMY_SHOT', status: 'idle' });
+
+    expect(nextState.enemyTrail).toEqual(enemyState.enemyTrail);
+  });
+
+  it('clears enemyTrail on END_SHOT when enemy ship is hit and disabled', () => {
+    const enemyState = {
+      ...initialGameState,
+      level: {
+        ...initialGameState.level,
+        enemyShip: { id: 'e1', status: 'active', x: 800, y: 200, radius: 20 },
+      },
+      enemyTrail: [{ x: 800, y: 200 }, { x: 500, y: 250 }],
+    };
+
+    const nextState = gameReducer(enemyState, {
+      type: 'END_SHOT',
+      status: 'hit_enemy',
+      finalTrail: [{ x: 100, y: 300 }, { x: 800, y: 200 }],
+    });
+
+    expect(nextState.level.enemyShip.status).toBe('disabled');
+    expect(nextState.enemyTrail).toEqual([]);
+  });
 });

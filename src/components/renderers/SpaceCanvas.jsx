@@ -9,6 +9,8 @@ import { ShieldRenderer } from './ShieldRenderer';
 import { EnemyShipRenderer } from './EnemyShipRenderer';
 import { TargetRenderer } from './TargetRenderer';
 import { SunRenderer } from './SunRenderer';
+import { calculateEnemyAim } from '../../utils/physics';
+import { simulateTrajectory } from '../../game/ai/trajectorySimulator';
 
 /**
  * SVG Space Viewport Canvas Component
@@ -59,6 +61,28 @@ export function SpaceCanvas({
     shields = [],
     enemyShip,
   } = level;
+
+  // Enemy Trajectory Path (Fired Trail or Predicted Aim Path when active)
+  let activeEnemyPath = [];
+  if (enemyShip && enemyShip.status === 'active') {
+    if (enemyTrail && enemyTrail.length > 1) {
+      activeEnemyPath = enemyTrail;
+    } else {
+      const aim = enemyAimInfo || calculateEnemyAim(enemyShip, ship, level);
+      if (aim) {
+        const sim = simulateTrajectory({
+          startPos: enemyShip,
+          angleDeg: aim.angleDeg,
+          power: aim.power,
+          level,
+          shooter: 'enemy',
+        });
+        if (sim && sim.points) {
+          activeEnemyPath = sim.points;
+        }
+      }
+    }
+  }
 
   // Aiming vector end point in SVG
   const rad = (angle * Math.PI) / 180;
@@ -265,9 +289,9 @@ export function SpaceCanvas({
       <EnemyShipRenderer enemyShip={enemyShip} />
 
       {/* Enemy Trajectory & Projectile */}
-      {enemyTrail.length > 1 && (
+      {activeEnemyPath.length > 1 && (
         <polyline
-          points={enemyTrail.map((p) => `${p.x},${p.y}`).join(' ')}
+          points={activeEnemyPath.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="none"
           stroke="#ef4444"
           strokeWidth="3.5"

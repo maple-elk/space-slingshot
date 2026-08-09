@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { predict3DTrajectory, calculateInitialVelocity } from '../../utils/physics3d';
+import { predict3DTrajectory, calculateInitialVelocity, calculateEnemyAim } from '../../utils/physics3d';
 
 export default function SpaceCanvas3D({
   level,
@@ -12,6 +12,8 @@ export default function SpaceCanvas3D({
   projectilePos,
   projectileVel,
   trail,
+  enemyTrail = [],
+  enemyAimInfo,
   pastTrails = [],
   showAllPastTrails,
   cameraTarget,
@@ -33,6 +35,7 @@ export default function SpaceCanvas3D({
   const trailLineRef = useRef(null);
   const launchArrowRef = useRef(null);
   const enemyShipMeshRef = useRef(null);
+  const enemyTrajectoryLineRef = useRef(null);
 
   // 1. Initialize Three.js Scene, Camera, Renderer & OrbitControls
   useEffect(() => {
@@ -449,6 +452,46 @@ export default function SpaceCanvas3D({
       trailLineRef.current = null;
     }
   }, [gameStatus, projectilePos, trail]);
+
+  // 4b. Render Active Enemy Trajectory Path in 3D
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    if (enemyTrajectoryLineRef.current) {
+      scene.remove(enemyTrajectoryLineRef.current);
+      enemyTrajectoryLineRef.current.geometry.dispose();
+      enemyTrajectoryLineRef.current.material.dispose();
+      enemyTrajectoryLineRef.current = null;
+    }
+
+    if (level && level.enemyShip && level.enemyShip.status === 'active') {
+      let pts = [];
+      if (enemyTrail && enemyTrail.length > 1) {
+        pts = enemyTrail.map((p) => new THREE.Vector3(p.x, p.y, p.z || 0));
+      } else {
+        const aim = enemyAimInfo || calculateEnemyAim(level.enemyShip, level.ship, level, gravityG);
+        if (aim && aim.initialVel) {
+          const predicted = predict3DTrajectory(level.enemyShip, aim.initialVel, level, gravityG, 180, 0.016);
+          pts = predicted.map((p) => new THREE.Vector3(p.x, p.y, p.z || 0));
+        }
+      }
+
+      if (pts.length > 1) {
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        const lineMat = new THREE.LineDashedMaterial({
+          color: 0xef4444,
+          dashSize: 10,
+          gapSize: 6,
+          linewidth: 3,
+        });
+        const line = new THREE.Line(lineGeo, lineMat);
+        line.computeLineDistances();
+        enemyTrajectoryLineRef.current = line;
+        scene.add(line);
+      }
+    }
+  }, [level, enemyTrail, enemyAimInfo, gravityG]);
 
   // 5. Render Persistent Past Shot Trails in 3D
   useEffect(() => {

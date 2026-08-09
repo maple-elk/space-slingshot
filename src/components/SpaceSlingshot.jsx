@@ -350,6 +350,8 @@ export default function SpaceSlingshot({
               projectilePos={projectilePos}
               projectileVel={projectileVel}
               trail={trail}
+              enemyTrail={enemyTrail}
+              enemyAimInfo={enemyAimInfo}
               pastTrails={pastTrails}
               showAllPastTrails={showAllPastTrails}
               cameraTarget={cameraTarget3D}

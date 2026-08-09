@@ -129,4 +129,59 @@ describe('SVG Renderer Components Structural Tests', () => {
 
     expect(html).not.toContain('net-force-vector');
   });
+
+  it('renders enemy path when enemy is active (fired trail or predicted path)', () => {
+    const activeEnemyLevel = {
+      ship: { x: 100, y: 300 },
+      target: { x: 900, y: 300, radius: 24 },
+      enemyShip: { id: 'e1', status: 'active', x: 800, y: 200, radius: 20 },
+      planets: [],
+    };
+    const enemyTrail = [{ x: 800, y: 200 }, { x: 500, y: 250 }, { x: 100, y: 300 }];
+    const htmlWithTrail = renderToString(
+      <SpaceCanvas
+        viewBox={[0, 0, 960, 600]}
+        level={activeEnemyLevel}
+        angle={0}
+        power={50}
+        enemyTrail={enemyTrail}
+      />
+    );
+
+    expect(htmlWithTrail).toContain('stroke="#ef4444"');
+    expect(htmlWithTrail).toContain('points="800,200 500,250 100,300"');
+
+    const htmlWithPredicted = renderToString(
+      <SpaceCanvas
+        viewBox={[0, 0, 960, 600]}
+        level={activeEnemyLevel}
+        angle={0}
+        power={50}
+        enemyTrail={[]}
+      />
+    );
+
+    expect(htmlWithPredicted).toContain('stroke="#ef4444"');
+    expect(htmlWithPredicted).toContain('<polyline');
+  });
+
+  it('does not render enemy path when enemy ship is disabled', () => {
+    const disabledEnemyLevel = {
+      ship: { x: 100, y: 300 },
+      target: { x: 900, y: 300, radius: 24 },
+      enemyShip: { id: 'e1', status: 'disabled', x: 800, y: 200, radius: 20 },
+      planets: [],
+    };
+    const html = renderToString(
+      <SpaceCanvas
+        viewBox={[0, 0, 960, 600]}
+        level={disabledEnemyLevel}
+        angle={0}
+        power={50}
+        enemyTrail={[{ x: 800, y: 200 }, { x: 500, y: 250 }]}
+      />
+    );
+
+    expect(html).not.toContain('stroke="#ef4444"');
+  });
 });

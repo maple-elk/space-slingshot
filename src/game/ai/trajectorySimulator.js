@@ -37,6 +37,7 @@ export function simulateTrajectory({
 
   const targetPoint = shooter === 'enemy' ? level.ship : level.target;
   let minDistance = Math.hypot(pos.x - targetPoint.x, pos.y - targetPoint.y);
+  const points = [{ ...pos }];
 
   for (let frame = 1; frame <= maxFrames; frame++) {
     const elapsed = startTime + frame * 0.016;
@@ -58,6 +59,7 @@ export function simulateTrajectory({
     pos = physRes.pos;
     vel = physRes.vel;
     warpCooldown = physRes.warpCooldown;
+    points.push({ ...pos });
 
     const curTargetPoint = shooter === 'enemy' ? currentLevel.ship : currentLevel.target;
     const currentDist = Math.hypot(pos.x - curTargetPoint.x, pos.y - curTargetPoint.y);
@@ -79,6 +81,7 @@ export function simulateTrajectory({
         minDistance,
         frames: frame,
         finalPos: pos,
+        points,
       };
     }
   }
@@ -89,5 +92,6 @@ export function simulateTrajectory({
     minDistance,
     frames: maxFrames,
     finalPos: pos,
+    points,
   };
 }
