@@ -12,6 +12,9 @@ import {
 import { playPopSound, playSnapSound, playVictorySound } from '../utils/audio';
 import { gameEvents } from '../utils/EventBus';
 import { gameReducer, initialGameState } from '../game/gameReducer';
+import { useCamera } from '../game/camera/useCamera';
+import { useGameInput } from '../game/input/useGameInput';
+import { useGameLoop } from '../game/loop/useGameLoop';
 import styles from './SpaceSlingshot.module.css';
 import { Play, RotateCcw, Compass, Zap, Eye, EyeOff, Sliders, Activity, ChevronUp, ChevronDown, ArrowRight } from 'lucide-react';
 
@@ -74,97 +77,11 @@ export default function SpaceGravityGame({ soundEnabled, isFullscreen }) {
     return () => unsubs.forEach((unsub) => unsub());
   }, [soundEnabled]);
 
-  // Dynamic Deep Space Camera Zoom State [minX, minY, width, height]
-  const getDefaultViewBox = useCallback((scale = boardScale) => {
-    return [-100 * scale, -60 * scale, 1160 * scale, 725 * scale];
-  }, [boardScale]);
-
-  const [viewBox, setViewBox] = useState([-100, -60, 1160, 725]);
-  const currentViewBoxRef = useRef([-100, -60, 1160, 725]);
-  const targetViewBoxRef = useRef([-100, -60, 1160, 725]);
-
-  // Set target viewBox bounds to enclose board and active projectile (clamped to max space arena)
-  const updateCameraTarget = useCallback((activePos) => {
-    if (!activePos) {
-      targetViewBoxRef.current = getDefaultViewBox(boardScale);
-    } else {
-      const margin = 180 * boardScale;
-      let minX = Math.min(-100 * boardScale, activePos.x - margin);
-      let maxX = Math.max(1060 * boardScale, activePos.x + margin);
-      let minY = Math.min(-60 * boardScale, activePos.y - margin);
-      let maxY = Math.max(660 * boardScale, activePos.y + margin);
-
-      let w = maxX - minX;
-      let h = maxY - minY;
-
-      const aspect = 1.6;
-      if (w / h < aspect) {
-        w = h * aspect;
-        const cx = (minX + maxX) / 2;
-        minX = cx - w / 2;
-      } else {
-        h = w / aspect;
-        const cy = (minY + maxY) / 2;
-        minY = cy - h / 2;
-      }
-
-      // Clamp camera max zoom to outer space arena bounds
-      const MAX_W = 6800;
-      const MAX_H = 4250;
-      if (w > MAX_W) {
-        const cx = minX + w / 2;
-        w = MAX_W;
-        minX = cx - w / 2;
-      }
-      if (h > MAX_H) {
-        const cy = minY + h / 2;
-        h = MAX_H;
-        minY = cy - h / 2;
-      }
-
-      targetViewBoxRef.current = [minX, minY, w, h];
-    }
-  }, [boardScale, getDefaultViewBox]);
-
-  // Dedicated Continuous Camera LERP Engine (Runs independently of physics state)
-  useEffect(() => {
-    let animId;
-    const lerpCamera = () => {
-      const cur = currentViewBoxRef.current;
-      const tgt = targetViewBoxRef.current;
-
-      const dx = tgt[0] - cur[0];
-      const dy = tgt[1] - cur[1];
-      const dw = tgt[2] - cur[2];
-      const dh = tgt[3] - cur[3];
-
-      if (Math.abs(dx) > 0.05 || Math.abs(dy) > 0.05 || Math.abs(dw) > 0.05 || Math.abs(dh) > 0.05) {
-        const lerp = 0.1;
-        const nextVB = [
-          cur[0] + dx * lerp,
-          cur[1] + dy * lerp,
-          cur[2] + dw * lerp,
-          cur[3] + dh * lerp,
-        ];
-        currentViewBoxRef.current = nextVB;
-        setViewBox(nextVB);
-      }
-      animId = requestAnimationFrame(lerpCamera);
-    };
-
-    animId = requestAnimationFrame(lerpCamera);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
-  const animRef = useRef(null);
-  const enemyAnimRef = useRef(null);
-  const velRef = useRef({ x: 0, y: 0 });
-  const posRef = useRef({ x: 0, y: 0 });
-  const warpCooldownRef = useRef(0);
-
-  const enemyVelRef = useRef({ x: 0, y: 0 });
-  const enemyPosRef = useRef({ x: 0, y: 0 });
-  const enemyWarpCooldownRef = useRef(0);
+  const {
+    viewBox,
+    updateCameraTarget,
+    resetCamera,
+  } = useCamera(boardScale);
 
   const {
     ship,
@@ -199,10 +116,7 @@ export default function SpaceGravityGame({ soundEnabled, isFullscreen }) {
       const newLvl = generateRandomLevel(960, 600, cfg);
       dispatch({ type: 'RESET_LEVEL', newLevel: newLvl });
 
-      const defVB = getDefaultViewBox(bScale);
-      targetViewBoxRef.current = defVB;
-      currentViewBoxRef.current = defVB;
-      setViewBox(defVB);
+      resetCamera(bScale);
       gameEvents.emit('SNAP');
     },
     [
@@ -216,289 +130,40 @@ export default function SpaceGravityGame({ soundEnabled, isFullscreen }) {
       enableBoosters,
       enableShields,
       enableEnemyShip,
-      getDefaultViewBox,
+      resetCamera,
     ]
   );
 
-  // Convert screen pointer event to SVG space coordinates
-  const getSVGCoordinates = (e) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    const svg = svgRef.current;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse());
-  };
+  const { handleLaunch, handleStopFlight } = useGameLoop({
+    gameStatus,
+    turnOwner,
+    roundCompleted,
+    angle,
+    power,
+    level,
+    gravityG,
+    simSpeedScale,
+    enableEnemyShip,
+    dispatch,
+    updateCameraTarget,
+    handleNewLevel,
+  });
 
-  // Update angle and power from pointer position
-  const updateAimFromPointer = (e) => {
-    if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
-    const coords = getSVGCoordinates(e);
-    const dx = coords.x - ship.x;
-    const dy = coords.y - ship.y;
-
-    const rad = Math.atan2(dy, dx);
-    const deg = Math.round(((rad * 180) / Math.PI + 360) % 360);
-
-    const dist = Math.hypot(dx, dy);
-    const newPower = Math.max(10, Math.min(100, Math.round(dist / 1.7)));
-
-    dispatch({ type: 'SET_AIM', angle: deg, power: newPower });
-  };
-
-  const handlePointerDown = (e) => {
-    if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
-    dispatch({ type: 'SET_IS_DRAGGING_AIM', value: true });
-    e.target.setPointerCapture(e.pointerId);
-    updateAimFromPointer(e);
-  };
-
-  const handlePointerMove = (e) => {
-    if (isDraggingAim && !isSimulating) {
-      updateAimFromPointer(e);
-    }
-  };
-
-  const handlePointerUp = (e) => {
-    if (isDraggingAim) {
-      try {
-        e.target.releasePointerCapture(e.pointerId);
-      } catch (err) {}
-      dispatch({ type: 'SET_IS_DRAGGING_AIM', value: false });
-    }
-  };
-
-  // Trigger Enemy Counter-Attack Turn (Imperfect AI aiming with 3 archetypes)
-  const triggerEnemyTurn = useCallback(() => {
-    if (!enemyShip || enemyShip.status !== 'active') return;
-
-    const aimResult = calculateEnemyAim(enemyShip, ship, level, gravityG);
-    if (!aimResult) return;
-
-    dispatch({ type: 'START_ENEMY_TURN', aimInfo: aimResult });
-
-    setTimeout(() => {
-      gameEvents.emit('POP');
-      dispatch({ type: 'START_ENEMY_FLIGHT' });
-
-      enemyPosRef.current = { x: enemyShip.x, y: enemyShip.y };
-      enemyVelRef.current = aimResult.initialVel;
-      enemyWarpCooldownRef.current = 0;
-      const enemyBoostedIds = new Set();
-
-      const enemyLoop = () => {
-        const result = updateProjectilePhysics(
-          enemyPosRef.current,
-          enemyVelRef.current,
-          level,
-          0.016,
-          gravityG,
-          simSpeedScale,
-          enemyWarpCooldownRef.current,
-          enemyBoostedIds
-        );
-
-        enemyPosRef.current = result.pos;
-        enemyVelRef.current = result.vel;
-        enemyWarpCooldownRef.current = result.warpCooldown;
-
-        dispatch({
-          type: 'UPDATE_ENEMY_PROJECTILE',
-          pos: result.pos,
-          vel: result.vel,
-        });
-
-        updateCameraTarget(result.pos);
-
-        const collision = checkCollisions(result.pos, result.vel, level, 'enemy', 960, 600);
-
-        if (collision.type === 'hit_player') {
-          gameEvents.emit('SNAP');
-          dispatch({ type: 'END_ENEMY_SHOT', status: 'hit_player' });
-          updateCameraTarget(null);
-          return;
-        }
-
-        if (collision.type === 'planet' || collision.type === 'black_hole' || collision.type === 'out_of_bounds') {
-          dispatch({ type: 'END_ENEMY_SHOT', status: 'idle' });
-          updateCameraTarget(null);
-          return;
-        }
-
-        enemyAnimRef.current = requestAnimationFrame(enemyLoop);
-      };
-
-      enemyAnimRef.current = requestAnimationFrame(enemyLoop);
-    }, 850);
-  }, [enemyShip, ship, level, gravityG, simSpeedScale, updateCameraTarget]);
-
-  // Save full completed shot trail to history
-  const finalizeShot = useCallback(
-    (status, finalTrail) => {
-      updateCameraTarget(null);
-      dispatch({ type: 'END_SHOT', status, finalTrail });
-
-      if (status !== 'hit_target' && status !== 'hit_enemy' && enableEnemyShip && level.enemyShip && level.enemyShip.status === 'active') {
-        triggerEnemyTurn();
-      }
-    },
-    [enableEnemyShip, level, triggerEnemyTurn, updateCameraTarget]
-  );
-
-  // Manually stop active flight / end turn with second spacebar press or button click
-  const handleStopFlight = useCallback(() => {
-    if (animRef.current) cancelAnimationFrame(animRef.current);
-    if (enemyAnimRef.current) cancelAnimationFrame(enemyAnimRef.current);
-
-    updateCameraTarget(null);
-
-    if (isSimulating) {
-      finalizeShot('stopped', trail);
-    } else if (gameStatus === 'enemy_flying') {
-      dispatch({ type: 'END_ENEMY_SHOT', status: 'idle' });
-    }
-  }, [isSimulating, gameStatus, trail, finalizeShot, updateCameraTarget]);
-
-  // Launch player projectile
-  const handleLaunch = useCallback(() => {
-    if (isSimulating || turnOwner !== 'player') return;
-
-    if (roundCompleted) {
-      handleNewLevel();
-      return;
-    }
-
-    gameEvents.emit('POP');
-
-    const rad = (angle * Math.PI) / 180;
-    const initialVel = {
-      x: (power / 4.8) * Math.cos(rad),
-      y: (power / 4.8) * Math.sin(rad),
-    };
-
-    posRef.current = { x: ship.x, y: ship.y };
-    velRef.current = initialVel;
-    warpCooldownRef.current = 0;
-
-    dispatch({ type: 'LAUNCH_PLAYER', pos: { x: ship.x, y: ship.y }, vel: initialVel });
-  }, [isSimulating, turnOwner, roundCompleted, angle, power, ship, handleNewLevel]);
-
-  // Keyboard controls: Arrow Keys for angle & power, Spacebar to Launch OR Stop Flight OR Advance Level!
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        if (roundCompleted) {
-          handleNewLevel();
-        } else if (isSimulating || gameStatus === 'enemy_flying') {
-          handleStopFlight();
-        } else if (turnOwner === 'player') {
-          handleLaunch();
-        }
-        return;
-      }
-
-      if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
-
-      const step = e.shiftKey ? 5 : 1;
-
-      if (e.code === 'ArrowLeft') {
-        e.preventDefault();
-        dispatch({ type: 'SET_AIM', angle: (angle - step + 360) % 360 });
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        dispatch({ type: 'SET_AIM', angle: (angle + step) % 360 });
-      } else if (e.code === 'ArrowUp') {
-        e.preventDefault();
-        dispatch({ type: 'SET_AIM', power: Math.min(100, power + step) });
-      } else if (e.code === 'ArrowDown') {
-        e.preventDefault();
-        dispatch({ type: 'SET_AIM', power: Math.max(10, power - step) });
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleLaunch, isSimulating, gameStatus, turnOwner, roundCompleted, handleNewLevel, handleStopFlight, angle, power]);
-
-  // Physics Animation Loop for Player Shot
-  useEffect(() => {
-    if (gameStatus !== 'flying') return;
-
-    let localTrail = [{ x: posRef.current.x, y: posRef.current.y }];
-    const boostedBoosterIds = new Set();
-
-    const loop = () => {
-      const result = updateProjectilePhysics(
-        posRef.current,
-        velRef.current,
-        level,
-        0.016,
-        gravityG,
-        simSpeedScale,
-        warpCooldownRef.current,
-        boostedBoosterIds
-      );
-
-      posRef.current = result.pos;
-      velRef.current = result.vel;
-      warpCooldownRef.current = result.warpCooldown;
-
-      dispatch({
-        type: 'UPDATE_PROJECTILE',
-        pos: result.pos,
-        vel: result.vel,
-        accel: result.accel,
-      });
-
-      localTrail.push({ x: result.pos.x, y: result.pos.y });
-      updateCameraTarget(result.pos);
-
-      const collision = checkCollisions(result.pos, result.vel, level, 'player', 960, 600);
-
-      if (collision.type === 'target') {
-        gameEvents.emit('VICTORY');
-        finalizeShot('hit_target', localTrail);
-        return;
-      }
-
-      if (collision.type === 'hit_enemy') {
-        gameEvents.emit('VICTORY');
-        finalizeShot('hit_enemy', localTrail);
-        return;
-      }
-
-      if (collision.type === 'black_hole') {
-        gameEvents.emit('SNAP');
-        finalizeShot('black_hole', localTrail);
-        return;
-      }
-
-      if (collision.type === 'shield_bounce') {
-        velRef.current = collision.reflectedVel;
-        gameEvents.emit('POP');
-      }
-
-      if (collision.type === 'planet') {
-        gameEvents.emit('SNAP');
-        finalizeShot('hit_planet', localTrail);
-        return;
-      }
-
-      if (collision.type === 'out_of_bounds') {
-        finalizeShot('out_of_bounds', localTrail);
-        return;
-      }
-
-      animRef.current = requestAnimationFrame(loop);
-    };
-
-    animRef.current = requestAnimationFrame(loop);
-
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-    };
-  }, [gameStatus, level, gravityG, simSpeedScale, finalizeShot, updateCameraTarget]);
+  const { handlePointerDown, handlePointerMove, handlePointerUp } = useGameInput({
+    svgRef,
+    ship,
+    isSimulating,
+    turnOwner,
+    roundCompleted,
+    gameStatus,
+    angle,
+    power,
+    isDraggingAim,
+    dispatch,
+    handleLaunch,
+    handleStopFlight,
+    handleNewLevel,
+  });
 
   // Aiming vector end point in SVG
   const rad = (angle * Math.PI) / 180;
