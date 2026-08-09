@@ -25,7 +25,7 @@ export function calculateSmartEnemyAim(enemyShip, playerShip, level, gravityG = 
     candidateAngles.push((baseAngleDeg + offset + 360) % 360);
   }
 
-  const candidatePowers = [35, 50, 65, 80, 95];
+  const candidatePowers = [35, 50, 70, 95, 125, 155, 185];
   let bestCandidate = null;
   let bestScore = -Infinity;
 

@@ -51,7 +51,7 @@ export function SlingshotLaunchControls({
           <input
             type="range"
             min="10"
-            max="100"
+            max="200"
             value={power}
             disabled={isDisabled}
             onChange={(e) => dispatch({ type: 'SET_AIM', power: Number(e.target.value) })}

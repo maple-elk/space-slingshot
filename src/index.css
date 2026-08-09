@@ -623,6 +623,34 @@ body {
   gap: 8px;
 }
 
+.btn-config-prominent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 10px rgba(139, 92, 246, 0.45);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-config-prominent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(217, 70, 239, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-config-prominent.active {
+  background: linear-gradient(135deg, #ec4899 0%, #ef4444 100%);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+}
+
 /* Space Stage & SVG Canvas */
 .space-stage-container {
   position: relative;

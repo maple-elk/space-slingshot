@@ -76,13 +76,12 @@ export function SlingshotTelemetryBar({
         </button>
 
         <button
-          className={`btn-icon ${isConfigOpen ? 'active' : ''}`}
+          className={`btn-config-prominent ${isConfigOpen ? 'active' : ''}`}
           onClick={onToggleConfig}
           title="Open Universe Config & Customization Menu"
-          style={{ padding: '6px 12px', fontSize: '0.78rem', gap: '6px' }}
         >
-          <Sliders size={15} color="var(--color-accent-purple)" />
-          <span>Config</span>
+          <Sliders size={16} />
+          <span>⚙️ Config</span>
         </button>
 
         {onToggleFullscreen && (
