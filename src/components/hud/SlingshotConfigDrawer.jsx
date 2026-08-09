@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sliders, Sparkles, Globe, Eye } from 'lucide-react';
+import { X, Sliders, Sparkles, Globe, Eye, Clock, Sun } from 'lucide-react';
 
 export function SlingshotConfigDrawer({
   isOpen,
@@ -16,6 +16,10 @@ export function SlingshotConfigDrawer({
   enableBoosters,
   enableShields,
   enableEnemyShip,
+  enableSolarOrbit = false,
+  launcherVelocityMode = 'stationary',
+  showOrbitRings = true,
+  sunMass = 1200,
   showGravityGradients,
   showGravityVectors,
   showNetVector,
@@ -45,6 +49,90 @@ export function SlingshotConfigDrawer({
 
         {/* Single Labeled Panel Content (Scrollable) */}
         <div className="drawer-content">
+          {/* SECTION 0: Time Dimension & Orbital Dynamics */}
+          <div className="config-section" style={{ borderLeft: '3px solid #fbbf24', paddingLeft: '12px' }}>
+            <div className="section-header">
+              <Clock size={16} color="#fbbf24" />
+              <span style={{ color: '#fbbf24', fontWeight: '800' }}>Time Dimension & Orbital Dynamics</span>
+            </div>
+
+            <div className="toggle-grid dense-grid">
+              <label className="toggle-card dense">
+                <input
+                  type="checkbox"
+                  checked={enableSolarOrbit}
+                  onChange={(e) => handleToggleObject('enableSolarOrbit', e.target.checked)}
+                  style={{ accentColor: '#fbbf24' }}
+                />
+                <div>
+                  <div className="toggle-title" style={{ color: '#fbbf24' }}>☀️ Enable Solar Orbit Mode</div>
+                  <div className="toggle-sub">Central Sun with Keplerian orbiting space objects</div>
+                </div>
+              </label>
+
+              <label className="toggle-card dense">
+                <input
+                  type="checkbox"
+                  checked={showOrbitRings}
+                  onChange={(e) => dispatch({ type: 'SET_SETTING', key: 'showOrbitRings', value: e.target.checked })}
+                  style={{ accentColor: '#38bdf8' }}
+                />
+                <div>
+                  <div className="toggle-title">⭕ Show Visual Orbit Track Rings</div>
+                  <div className="toggle-sub">Faint dashed orbital paths around central Sun</div>
+                </div>
+              </label>
+            </div>
+
+            {enableSolarOrbit && (
+              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Launcher Velocity Mode Selection */}
+                <div className="slider-group">
+                  <div className="slider-header">
+                    <span>🚀 Launcher Physics Mode</span>
+                    <span style={{ color: '#ec4899', fontWeight: '700' }}>
+                      {launcherVelocityMode === 'stationary' ? 'Stationary Anchor' : 'Orbital Momentum'}
+                    </span>
+                  </div>
+                  <div className="planet-cnt-buttons">
+                    <button
+                      className={`preset-btn ${launcherVelocityMode === 'stationary' ? 'active' : ''}`}
+                      onClick={() => dispatch({ type: 'SET_SETTING', key: 'launcherVelocityMode', value: 'stationary' })}
+                    >
+                      ⚓ Stationary Anchor
+                    </button>
+                    <button
+                      className={`preset-btn ${launcherVelocityMode === 'orbital' ? 'active' : ''}`}
+                      onClick={() => dispatch({ type: 'SET_SETTING', key: 'launcherVelocityMode', value: 'orbital' })}
+                    >
+                      💫 Orbital Velocity Transfer
+                    </button>
+                  </div>
+                </div>
+
+                {/* Central Sun Gravity Pull Mass */}
+                <div className="slider-group">
+                  <div className="slider-header">
+                    <span>Central Sun Mass</span>
+                    <span style={{ color: '#fbbf24', fontWeight: '700' }}>{sunMass}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="400"
+                    max="2400"
+                    step="100"
+                    value={sunMass}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      dispatch({ type: 'SET_SETTING', key: 'sunMass', value: val });
+                      handleNewLevel({ sunMass: val });
+                    }}
+                    style={{ accentColor: '#fbbf24' }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
           {/* SECTION 1: Optional Celestial Objects */}
           <div className="config-section">
             <div className="section-header">

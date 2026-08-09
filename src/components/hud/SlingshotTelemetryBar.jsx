@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, Sliders, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { Eye, EyeOff, Sliders, Maximize2, Minimize2, RotateCcw, Pause, Play } from 'lucide-react';
 
 export function SlingshotTelemetryBar({
   targetDist,
@@ -10,6 +10,9 @@ export function SlingshotTelemetryBar({
   enemyAimInfo,
   pastTrails,
   showAllPastTrails,
+  enableSolarOrbit,
+  isOrbitPaused,
+  onTogglePauseOrbits,
   onTogglePastTrails,
   onNewLevel,
   onToggleConfig,
@@ -39,6 +42,11 @@ export function SlingshotTelemetryBar({
             👾 Enemy Interceptor: {enemyAimInfo.archetypeName}
           </div>
         )}
+        {enableSolarOrbit && isOrbitPaused && (
+          <div className="status-badge" style={{ background: 'rgba(251, 191, 36, 0.25)', color: '#fbbf24', border: '1px solid #fbbf24' }}>
+            ⏸️ Orbits Frozen (Aiming Mode)
+          </div>
+        )}
       </div>
 
       {/* Center Telemetry Readouts */}
@@ -51,6 +59,26 @@ export function SlingshotTelemetryBar({
 
       {/* Right Controls */}
       <div className="telemetry-actions">
+        {enableSolarOrbit && (
+          <button
+            className={`btn-icon ${isOrbitPaused ? 'active' : ''}`}
+            onClick={onTogglePauseOrbits}
+            title={isOrbitPaused ? 'Resume live orbital motion' : 'Pause orbital motion to aim smoothly'}
+            style={{
+              padding: '6px 10px',
+              fontSize: '0.78rem',
+              background: isOrbitPaused ? 'rgba(251, 191, 36, 0.35)' : 'transparent',
+              borderColor: isOrbitPaused ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
+              color: isOrbitPaused ? '#fef08a' : 'inherit',
+            }}
+          >
+            {isOrbitPaused ? <Play size={15} /> : <Pause size={15} />}
+            <span className="hide-on-mobile">
+              {isOrbitPaused ? 'Resume Orbit' : 'Pause Orbit'}
+            </span>
+          </button>
+        )}
+
         {pastTrails && pastTrails.length > 0 && (
           <button
             className={`btn-icon ${showAllPastTrails ? 'active' : ''}`}

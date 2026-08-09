@@ -15,6 +15,19 @@ export const initialGameState = {
   enableShields: false,
   enableEnemyShip: false,
 
+  // Solar Orbit Time Dimensions
+  enableSolarOrbit: false,
+  launcherVelocityMode: 'stationary', // 'stationary' | 'orbital'
+  showOrbitRings: true,
+  sunMass: 1200,
+  elapsedTime: 0,
+  isOrbitPaused: false,
+
+  // 3D Dimension Mode
+  dimensionMode: '2d', // '2d' | '3d' | 'solar'
+  pitch: 12,
+  yaw: 350,
+
   // Visual Toggles
   showGravityGradients: true,
   showGravityVectors: true,
@@ -32,6 +45,8 @@ export const initialGameState = {
     enableBoosters: false,
     enableShields: false,
     enableEnemyShip: false,
+    enableSolarOrbit: false,
+    sunMass: 1200,
   }),
 
   // Aiming Controls
@@ -45,7 +60,7 @@ export const initialGameState = {
   score: 0,
   projectilePos: null,
   projectileVel: null,
-  projectileAccel: { ax: 0, ay: 0 },
+  projectileAccel: { ax: 0, ay: 0, az: 0 },
   trail: [],
   pastTrails: [],
   showAllPastTrails: false,
@@ -66,10 +81,19 @@ export function gameReducer(state, action) {
     case 'SET_SETTING':
       return { ...state, [action.key]: action.value };
 
+    case 'UPDATE_ELAPSED_TIME':
+      return { ...state, elapsedTime: state.elapsedTime + action.dt };
+
+    case 'TOGGLE_PAUSE_ORBITS':
+      return { ...state, isOrbitPaused: !state.isOrbitPaused };
+
     case 'SET_AIM':
       return {
         ...state,
-        angle: action.angle !== undefined ? action.angle : state.angle,
+        gameStatus: state.gameStatus !== 'flying' && state.gameStatus !== 'enemy_flying' && state.gameStatus !== 'enemy_aiming' ? 'idle' : state.gameStatus,
+        pitch: action.pitch !== undefined ? action.pitch : state.pitch,
+        yaw: action.yaw !== undefined ? action.yaw : state.yaw,
+        angle: action.yaw !== undefined ? action.yaw : (action.angle !== undefined ? action.angle : state.angle),
         power: action.power !== undefined ? action.power : state.power,
       };
 
@@ -81,9 +105,10 @@ export function gameReducer(state, action) {
         ...state,
         gameStatus: 'flying',
         turnOwner: 'player',
+        isOrbitPaused: false, // Auto-resume orbits on launch
         projectilePos: action.pos,
         projectileVel: action.vel,
-        projectileAccel: { ax: 0, ay: 0 },
+        projectileAccel: { ax: 0, ay: 0, az: 0 },
         trail: [action.pos],
       };
 
@@ -107,6 +132,8 @@ export function gameReducer(state, action) {
         status: action.status,
         points: trailPoints,
         angle: state.angle,
+        pitch: state.pitch,
+        yaw: state.yaw,
         power: state.power,
       };
 
@@ -141,9 +168,9 @@ export function gameReducer(state, action) {
         gameStatus: 'enemy_aiming',
         turnOwner: 'enemy',
         enemyAimInfo: action.aimInfo,
-        enemyProjectilePos: { x: state.level.enemyShip.x, y: state.level.enemyShip.y },
+        enemyProjectilePos: { x: state.level.enemyShip.x, y: state.level.enemyShip.y, z: state.level.enemyShip.z || 0 },
         enemyProjectileVel: action.aimInfo.initialVel,
-        enemyTrail: [{ x: state.level.enemyShip.x, y: state.level.enemyShip.y }],
+        enemyTrail: [{ x: state.level.enemyShip.x, y: state.level.enemyShip.y, z: state.level.enemyShip.z || 0 }],
       };
 
     case 'START_ENEMY_FLIGHT':
@@ -189,6 +216,7 @@ export function gameReducer(state, action) {
         roundCompleted: false,
         showEndSummary: false,
         level: action.newLevel,
+        elapsedTime: 0,
       };
 
     case 'TOGGLE_PAST_TRAILS':

@@ -5,6 +5,20 @@ import SpaceSlingshot from './components/SpaceSlingshot';
 export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [dimensionMode, setDimensionMode] = useState('2d'); // '2d' | '3d' | 'solar'
+  const [enableSolarOrbit, setEnableSolarOrbit] = useState(false);
+
+  const handleSelectDimensionMode = useCallback((mode) => {
+    setDimensionMode(mode);
+    setEnableSolarOrbit(mode === 'solar');
+  }, []);
+
+  const handleToggleSolarOrbit = useCallback((enabled) => {
+    setEnableSolarOrbit(enabled);
+    if (enabled) {
+      setDimensionMode('solar');
+    }
+  }, []);
 
   // Fullscreen API toggle handler
   const handleToggleFullscreen = useCallback(() => {
@@ -19,7 +33,7 @@ export default function App() {
     }
   }, []);
 
-  // Listen to native browser fullscreen change events (e.g. user hits ESC key)
+  // Listen to native browser fullscreen change events
   useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -36,12 +50,20 @@ export default function App() {
         onToggleSound={() => setSoundEnabled((v) => !v)}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
+        dimensionMode={dimensionMode}
+        onSelectDimensionMode={handleSelectDimensionMode}
+        enableSolarOrbit={enableSolarOrbit}
+        onToggleSolarOrbit={handleToggleSolarOrbit}
       />
       <main style={isFullscreen ? { flex: 1, height: 'calc(100vh - 90px)' } : {}}>
         <SpaceSlingshot
           soundEnabled={soundEnabled}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
+          dimensionMode={dimensionMode}
+          onSelectDimensionMode={handleSelectDimensionMode}
+          enableSolarOrbitExt={enableSolarOrbit}
+          onToggleSolarOrbit={handleToggleSolarOrbit}
         />
       </main>
     </div>

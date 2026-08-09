@@ -1,4 +1,4 @@
-import { updateProjectilePhysics, checkCollisions, DEFAULT_G } from '../../utils/physics';
+import { updateProjectilePhysics, checkCollisions, getEvaluatedLevelAtTime, DEFAULT_G } from '../../utils/physics';
 
 /**
  * Headless Trajectory Simulator for AI Solver and Trajectory Prediction
@@ -12,6 +12,7 @@ import { updateProjectilePhysics, checkCollisions, DEFAULT_G } from '../../utils
  * @param {number} [params.gravityG]
  * @param {number} [params.maxFrames]
  * @param {'player'|'enemy'} [params.shooter]
+ * @param {number} [params.startTime]
  * @returns {Object} Simulation result metrics
  */
 export function simulateTrajectory({
@@ -22,6 +23,7 @@ export function simulateTrajectory({
   gravityG = DEFAULT_G,
   maxFrames = 600,
   shooter = 'enemy',
+  startTime = 0,
 }) {
   let pos = { x: startPos.x, y: startPos.y };
   const rad = (angleDeg * Math.PI) / 180;
@@ -37,10 +39,15 @@ export function simulateTrajectory({
   let minDistance = Math.hypot(pos.x - targetPoint.x, pos.y - targetPoint.y);
 
   for (let frame = 1; frame <= maxFrames; frame++) {
+    const elapsed = startTime + frame * 0.016;
+    const currentLevel = level.enableSolarOrbit
+      ? getEvaluatedLevelAtTime(level, elapsed, gravityG)
+      : level;
+
     const physRes = updateProjectilePhysics(
       pos,
       vel,
-      level,
+      currentLevel,
       0.016,
       gravityG,
       1.0,
@@ -52,12 +59,13 @@ export function simulateTrajectory({
     vel = physRes.vel;
     warpCooldown = physRes.warpCooldown;
 
-    const currentDist = Math.hypot(pos.x - targetPoint.x, pos.y - targetPoint.y);
+    const curTargetPoint = shooter === 'enemy' ? currentLevel.ship : currentLevel.target;
+    const currentDist = Math.hypot(pos.x - curTargetPoint.x, pos.y - curTargetPoint.y);
     if (currentDist < minDistance) {
       minDistance = currentDist;
     }
 
-    const collision = checkCollisions(pos, vel, level, shooter);
+    const collision = checkCollisions(pos, vel, currentLevel, shooter);
 
     if (collision.type === 'shield_bounce') {
       vel = collision.reflectedVel;

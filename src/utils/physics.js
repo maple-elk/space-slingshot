@@ -28,10 +28,34 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
   const sW = width * boardScale;
   const sH = height * boardScale;
 
-  const target = {
-    x: Math.round(sW - 110 * boardScale),
-    y: Math.round(100 * boardScale + rng() * 260 * boardScale),
-    radius: 24,
+  const enableSolarOrbit = !!config.enableSolarOrbit;
+
+  // Central Sun for Solar Orbit Mode
+  const sun = enableSolarOrbit
+    ? {
+        id: 'sun_central',
+        x: Math.round(sW / 2),
+        y: Math.round(sH / 2),
+        radius: 34,
+        mass: config.sunMass ? Number(config.sunMass) : 1200,
+        fill: '#fbbf24',
+        glow: 'rgba(251, 191, 36, 0.55)',
+        name: 'Sol Prime',
+      }
+    : null;
+
+  const attachOrbit = (obj) => {
+    if (!sun) return obj;
+    const dx = obj.x - sun.x;
+    const dy = obj.y - sun.y;
+    const orbitRadius = Math.round(Math.hypot(dx, dy));
+    const orbitInitialAngle = Math.atan2(dy, dx);
+    return {
+      ...obj,
+      orbitRadius,
+      orbitInitialAngle,
+      orbitDir: 1,
+    };
   };
 
   const countSetting = config.planetCount || 'auto';
@@ -41,6 +65,24 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       : Math.max(1, Math.min(5, Number(countSetting)));
 
   const massMult = config.massMult ? Number(config.massMult) : 1.0;
+
+  // Target Station
+  let target;
+  if (enableSolarOrbit && sun) {
+    const tAngle = rng() * Math.PI * 2;
+    const tRadius = Math.round((280 + rng() * 100) * boardScale);
+    target = attachOrbit({
+      x: Math.round(sun.x + tRadius * Math.cos(tAngle)),
+      y: Math.round(sun.y + tRadius * Math.sin(tAngle)),
+      radius: 24,
+    });
+  } else {
+    target = {
+      x: Math.round(sW - 110 * boardScale),
+      y: Math.round(100 * boardScale + rng() * 260 * boardScale),
+      radius: 24,
+    };
+  }
 
   // Space Objects lists
   const planets = [];
@@ -60,6 +102,7 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
   ];
 
   const occupiedList = [];
+  if (sun) occupiedList.push(sun);
 
   const isPositionOccupied = (x, y, minClearance = 80 * Math.sqrt(boardScale)) => {
     if (Math.hypot(x - target.x, y - target.y) < minClearance) return true;
@@ -75,68 +118,91 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let attempts = 0;
 
     do {
-      px = (250 + rng() * (width - 460)) * boardScale;
-      py = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const pAngle = rng() * Math.PI * 2;
+        const pRadiusDist = (120 + i * 85 + rng() * 40) * boardScale;
+        px = sun.x + pRadiusDist * Math.cos(pAngle);
+        py = sun.y + pRadiusDist * Math.sin(pAngle);
+      } else {
+        px = (250 + rng() * (width - 460)) * boardScale;
+        py = (90 + rng() * 260) * boardScale;
+      }
       radius = 28 + Math.floor(rng() * 34);
       mass = Math.round(radius * (1.2 + rng() * 1.5) * massMult);
       attempts++;
     } while (isPositionOccupied(px, py, radius + 40 * Math.sqrt(boardScale)) && attempts < 120);
 
     const theme = planetColors[i % planetColors.length];
-    const planetObj = {
+    const planetObj = attachOrbit({
       id: i + 1,
-      x: px,
-      y: py,
+      x: Math.round(px),
+      y: Math.round(py),
       radius,
       mass,
       fill: theme.fill,
       glow: theme.glow,
       name: theme.name,
-    };
+    });
 
     planets.push(planetObj);
     occupiedList.push(planetObj);
   }
 
-  // 2. Optional Black Hole
+  // 2. Optional Black Hole (Lagrange point if solar orbit active)
   if (config.enableBlackHoles) {
     let bx, by;
     let attempts = 0;
     do {
-      bx = (280 + rng() * (width - 500)) * boardScale;
-      by = (100 + rng() * 240) * boardScale;
+      if (enableSolarOrbit && sun && planets.length > 0) {
+        // Place near L4 or L5 Lagrange point of planet 1 (+/- 60 degrees)
+        const refPlanet = planets[0];
+        const lagrangeOffset = (rng() > 0.5 ? 1 : -1) * (Math.PI / 3);
+        const lAngle = refPlanet.orbitInitialAngle + lagrangeOffset;
+        bx = sun.x + refPlanet.orbitRadius * Math.cos(lAngle);
+        by = sun.y + refPlanet.orbitRadius * Math.sin(lAngle);
+      } else {
+        bx = (280 + rng() * (width - 500)) * boardScale;
+        by = (100 + rng() * 240) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(bx, by, 110 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const bh = {
+    const bh = attachOrbit({
       id: 'bh_1',
-      x: bx,
-      y: by,
+      x: Math.round(bx),
+      y: Math.round(by),
       radius: 18,
       eventRadius: 46,
       mass: 220 * massMult,
-    };
+    });
     blackHoles.push(bh);
     occupiedList.push(bh);
   }
 
-  // 3. Optional Asteroid Cloud
+  // 3. Optional Asteroid Cloud / Asteroid Belt
   if (config.enableAsteroids) {
     let ax, ay;
     let attempts = 0;
     do {
-      ax = (250 + rng() * (width - 450)) * boardScale;
-      ay = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const astAngle = rng() * Math.PI * 2;
+        const beltDist = (220 + rng() * 60) * boardScale;
+        ax = sun.x + beltDist * Math.cos(astAngle);
+        ay = sun.y + beltDist * Math.sin(astAngle);
+      } else {
+        ax = (250 + rng() * (width - 450)) * boardScale;
+        ay = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(ax, ay, 90 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const ast = {
+    const ast = attachOrbit({
       id: 'ast_1',
-      x: ax,
-      y: ay,
+      x: Math.round(ax),
+      y: Math.round(ay),
       radius: 68,
       dragFactor: 0.983,
-    };
+    });
     asteroids.push(ast);
     occupiedList.push(ast);
   }
@@ -146,18 +212,29 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let w1x, w1y, w2x, w2y;
     let attempts = 0;
     do {
-      w1x = (220 + rng() * 200) * boardScale;
-      w1y = (90 + rng() * 260) * boardScale;
-      w2x = (width - 360 + rng() * 200) * boardScale;
-      w2y = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const a1 = rng() * Math.PI * 2;
+        const a2 = a1 + Math.PI + (rng() * 0.5 - 0.25);
+        const r1 = (160 + rng() * 80) * boardScale;
+        const r2 = (280 + rng() * 80) * boardScale;
+        w1x = sun.x + r1 * Math.cos(a1);
+        w1y = sun.y + r1 * Math.sin(a1);
+        w2x = sun.x + r2 * Math.cos(a2);
+        w2y = sun.y + r2 * Math.sin(a2);
+      } else {
+        w1x = (220 + rng() * 200) * boardScale;
+        w1y = (90 + rng() * 260) * boardScale;
+        w2x = (width - 360 + rng() * 200) * boardScale;
+        w2y = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (
       (isPositionOccupied(w1x, w1y, 70 * Math.sqrt(boardScale)) || isPositionOccupied(w2x, w2y, 70 * Math.sqrt(boardScale))) &&
       attempts < 150
     );
 
-    const portalA = { id: 'portal_a', x: w1x, y: w1y, radius: 22, color: '#06b6d4', pairId: 'portal_b' };
-    const portalB = { id: 'portal_b', x: w2x, y: w2y, radius: 22, color: '#a855f7', pairId: 'portal_a' };
+    const portalA = attachOrbit({ id: 'portal_a', x: Math.round(w1x), y: Math.round(w1y), radius: 22, color: '#06b6d4', pairId: 'portal_b' });
+    const portalB = attachOrbit({ id: 'portal_b', x: Math.round(w2x), y: Math.round(w2y), radius: 22, color: '#a855f7', pairId: 'portal_a' });
 
     wormholes.push(portalA, portalB);
     occupiedList.push(portalA, portalB);
@@ -168,19 +245,26 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let rx, ry;
     let attempts = 0;
     do {
-      rx = (260 + rng() * (width - 480)) * boardScale;
-      ry = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const pAng = rng() * Math.PI * 2;
+        const pDist = (190 + rng() * 90) * boardScale;
+        rx = sun.x + pDist * Math.cos(pAng);
+        ry = sun.y + pDist * Math.sin(pAng);
+      } else {
+        rx = (260 + rng() * (width - 480)) * boardScale;
+        ry = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(rx, ry, 95 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const pulsar = {
+    const pulsar = attachOrbit({
       id: 'pul_1',
-      x: rx,
-      y: ry,
+      x: Math.round(rx),
+      y: Math.round(ry),
       radius: 24,
       mass: -140 * massMult,
       color: '#38bdf8',
-    };
+    });
     pulsars.push(pulsar);
     occupiedList.push(pulsar);
   }
@@ -190,18 +274,25 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let gx, gy;
     let attempts = 0;
     do {
-      gx = (240 + rng() * (width - 450)) * boardScale;
-      gy = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const gAng = rng() * Math.PI * 2;
+        const gDist = (170 + rng() * 110) * boardScale;
+        gx = sun.x + gDist * Math.cos(gAng);
+        gy = sun.y + gDist * Math.sin(gAng);
+      } else {
+        gx = (240 + rng() * (width - 450)) * boardScale;
+        gy = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(gx, gy, 80 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const booster = {
+    const booster = attachOrbit({
       id: 'boost_1',
-      x: gx,
-      y: gy,
+      x: Math.round(gx),
+      y: Math.round(gy),
       radius: 26,
       boostMult: 1.45,
-    };
+    });
     boosters.push(booster);
     occupiedList.push(booster);
   }
@@ -211,19 +302,26 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let mx, my;
     let attempts = 0;
     do {
-      mx = (260 + rng() * (width - 460)) * boardScale;
-      my = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const mAng = rng() * Math.PI * 2;
+        const mDist = (180 + rng() * 100) * boardScale;
+        mx = sun.x + mDist * Math.cos(mAng);
+        my = sun.y + mDist * Math.sin(mAng);
+      } else {
+        mx = (260 + rng() * (width - 460)) * boardScale;
+        my = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(mx, my, 85 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const shieldObj = {
+    const shieldObj = attachOrbit({
       id: 'shield_1',
-      x: mx,
-      y: my,
+      x: Math.round(mx),
+      y: Math.round(my),
       radius: 20,
       shieldRadius: 40,
       mass: 40 * massMult,
-    };
+    });
     shields.push(shieldObj);
     occupiedList.push(shieldObj);
   }
@@ -234,19 +332,26 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     let ex, ey;
     let attempts = 0;
     do {
-      ex = (width - 260 + rng() * 140) * boardScale;
-      ey = (90 + rng() * 260) * boardScale;
+      if (enableSolarOrbit && sun) {
+        const eAng = rng() * Math.PI * 2;
+        const eDist = (240 + rng() * 110) * boardScale;
+        ex = sun.x + eDist * Math.cos(eAng);
+        ey = sun.y + eDist * Math.sin(eAng);
+      } else {
+        ex = (width - 260 + rng() * 140) * boardScale;
+        ey = (90 + rng() * 260) * boardScale;
+      }
       attempts++;
     } while (isPositionOccupied(ex, ey, 90 * Math.sqrt(boardScale)) && attempts < 120);
 
-    const enemyObj = {
+    const enemyObj = attachOrbit({
       id: 'enemy_1',
-      x: ex,
-      y: ey,
+      x: Math.round(ex),
+      y: Math.round(ey),
       radius: 20,
       status: 'active',
       name: 'Enemy Interceptor',
-    };
+    });
     enemyShip = enemyObj;
     occupiedList.push(enemyObj);
   }
@@ -256,17 +361,26 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
   let shipAttempts = 0;
   do {
     shipOverlap = false;
-    sx = (140 + rng() * 120) * boardScale;
-    sy = (100 + rng() * 250) * boardScale;
+    if (enableSolarOrbit && sun) {
+      const sAng = rng() * Math.PI * 2;
+      const sDist = (150 + rng() * 110) * boardScale;
+      sx = sun.x + sDist * Math.cos(sAng);
+      sy = sun.y + sDist * Math.sin(sAng);
+    } else {
+      sx = (140 + rng() * 120) * boardScale;
+      sy = (100 + rng() * 250) * boardScale;
+    }
 
     if (isPositionOccupied(sx, sy, 80 * Math.sqrt(boardScale))) shipOverlap = true;
     shipAttempts++;
   } while (shipOverlap && shipAttempts < 150);
 
-  const ship = { x: sx, y: sy };
+  const ship = attachOrbit({ x: Math.round(sx), y: Math.round(sy) });
 
   return {
     seed,
+    enableSolarOrbit,
+    sun,
     ship,
     target,
     planets,
@@ -351,10 +465,71 @@ export function calculateEnemyAim(enemyShip, playerShip, level, gravityG = DEFAU
   };
 }
 
+// Calculate current position and tangential velocity of an orbiting body at time t
+export function getOrbitalPosition(body, sun, elapsedTime = 0, gravityG = DEFAULT_G) {
+  if (!sun || body.orbitRadius === undefined) {
+    return { x: body.x, y: body.y, vx: 0, vy: 0 };
+  }
+
+  const sunMass = sun.mass || 1200;
+  const r = Math.max(40, body.orbitRadius);
+  // Keplerian angular speed w = sqrt(G * M_sun / r^3)
+  const baseSpeed = Math.sqrt((gravityG * sunMass) / (r * r * r));
+  const dir = body.orbitDir || 1; // 1 = counter-clockwise, -1 = clockwise
+  const omega = baseSpeed * dir;
+
+  const currentAngle = body.orbitInitialAngle + omega * elapsedTime;
+
+  const curX = sun.x + r * Math.cos(currentAngle);
+  const curY = sun.y + r * Math.sin(currentAngle);
+
+  // Tangential velocity vector (dx/dt, dy/dt) in internal physics velocity units
+  const vx = (-r * omega * Math.sin(currentAngle)) / 18.5;
+  const vy = (r * omega * Math.cos(currentAngle)) / 18.5;
+
+  return { x: curX, y: curY, vx, vy, currentAngle };
+}
+
+// Return a copy of the level with all orbital objects evaluated at time t
+export function getEvaluatedLevelAtTime(level, elapsedTime = 0, gravityG = DEFAULT_G) {
+  if (!level || !level.sun || !level.enableSolarOrbit) {
+    return level;
+  }
+
+  const { sun } = level;
+
+  const evalBody = (item) => {
+    if (!item) return item;
+    const pos = getOrbitalPosition(item, sun, elapsedTime, gravityG);
+    return {
+      ...item,
+      x: pos.x,
+      y: pos.y,
+      vx: pos.vx,
+      vy: pos.vy,
+    };
+  };
+
+  return {
+    ...level,
+    ship: level.ship ? evalBody(level.ship) : level.ship,
+    target: level.target ? evalBody(level.target) : level.target,
+    enemyShip: level.enemyShip ? evalBody(level.enemyShip) : level.enemyShip,
+    planets: (level.planets || []).map(evalBody),
+    blackHoles: (level.blackHoles || []).map(evalBody),
+    asteroids: (level.asteroids || []).map(evalBody),
+    wormholes: (level.wormholes || []).map(evalBody),
+    pulsars: (level.pulsars || []).map(evalBody),
+    boosters: (level.boosters || []).map(evalBody),
+    shields: (level.shields || []).map(evalBody),
+  };
+}
+
 // Calculate individual gravitational acceleration vectors
 export function calculateIndividualGravitationalAccels(x, y, level, gravityG = DEFAULT_G) {
-  const { planets = [], blackHoles = [], pulsars = [] } = level;
+  const { planets = [], blackHoles = [], pulsars = [], sun } = level;
   const sources = [
+    ...(sun ? [{ ...sun, fill: '#fbbf24', name: 'Sol Prime Central Sun', mass: sun.mass }] : []),
     ...planets,
     ...blackHoles.map((b) => ({ ...b, fill: '#f97316', name: 'Black Hole Singularity', mass: b.mass * 3.5 })),
     ...pulsars.map((p) => ({ ...p, fill: '#38bdf8', name: 'Repulsive Pulsar' })),
@@ -393,8 +568,9 @@ export function calculateGravitationalAccel(x, y, level, gravityG = DEFAULT_G) {
   let ax = 0;
   let ay = 0;
 
-  const { planets = [], blackHoles = [], pulsars = [] } = level;
+  const { planets = [], blackHoles = [], pulsars = [], sun } = level;
   const sources = [
+    ...(sun ? [sun] : []),
     ...planets,
     ...blackHoles.map((b) => ({ ...b, mass: b.mass * 3.5 })),
     ...pulsars,
@@ -482,7 +658,12 @@ export function updateProjectilePhysics(
 
 // Check collisions: 'target', 'hit_enemy', 'hit_player', 'planet', 'black_hole', 'shield_bounce', 'out_of_bounds', or 'none'
 export function checkCollisions(pos, vel, level, shooter = 'player', width = 960, height = 600) {
-  const { target, ship, enemyShip, planets = [], blackHoles = [], shields = [] } = level;
+  const { target, ship, enemyShip, planets = [], blackHoles = [], shields = [], sun } = level;
+
+  // Check Sun hit
+  if (sun && Math.hypot(pos.x - sun.x, pos.y - sun.y) <= sun.radius + 6) {
+    return { type: 'planet', name: sun.name || 'Sol Prime Central Sun' };
+  }
 
   // Check target hit (only player can hit target)
   if (shooter === 'player' && Math.hypot(pos.x - target.x, pos.y - target.y) <= target.radius + 6) {
@@ -547,3 +728,4 @@ export function checkCollisions(pos, vel, level, shooter = 'player', width = 960
 
   return { type: 'none' };
 }
+
