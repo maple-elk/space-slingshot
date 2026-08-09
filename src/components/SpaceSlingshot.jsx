@@ -1,5 +1,5 @@
-import React, { useReducer, useEffect, useRef, useCallback } from 'react';
-import { generateRandomLevel, calculateIndividualGravitationalAccels, calculateGravitationalAccel, DEFAULT_G } from '../utils/physics';
+import React, { useReducer, useEffect, useRef, useCallback, useState } from 'react';
+import { generateRandomLevel, calculateIndividualGravitationalAccels, calculateGravitationalAccel } from '../utils/physics';
 import { playPopSound, playSnapSound, playVictorySound } from '../utils/audio';
 import { gameEvents } from '../utils/EventBus';
 import { gameReducer, initialGameState } from '../game/gameReducer';
@@ -7,15 +7,14 @@ import { useCamera } from '../game/camera/useCamera';
 import { useGameInput } from '../game/input/useGameInput';
 import { useGameLoop } from '../game/loop/useGameLoop';
 import { SpaceCanvas } from './renderers/SpaceCanvas';
-import { TelemetryHUD } from './hud/TelemetryHUD';
-import { LaunchControlsCard } from './hud/LaunchControlsCard';
-import { SpaceObjectsToggleCard } from './hud/SpaceObjectsToggleCard';
-import { UniverseControlsCard } from './hud/UniverseControlsCard';
+import { SlingshotTelemetryBar } from './hud/SlingshotTelemetryBar';
+import { SlingshotLaunchControls } from './hud/SlingshotLaunchControls';
+import { SlingshotConfigDrawer } from './hud/SlingshotConfigDrawer';
 import { EndSummaryModal } from './hud/EndSummaryModal';
-import styles from './SpaceSlingshot.module.css';
 
-export default function SpaceSlingshot({ soundEnabled = true }) {
+export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = false, onToggleFullscreen }) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
   const svgRef = useRef(null);
 
   const {
@@ -31,12 +30,13 @@ export default function SpaceSlingshot({ soundEnabled = true }) {
     projectileAccel,
     trail,
     pastTrails,
+    showAllPastTrails,
     shotsTaken,
     currentScore,
+    score,
     enemyAimInfo,
     enemyProjectilePos,
     enemyTrail,
-    enemyShotStatus,
     simSpeedScale,
     boardScale,
     gravityG,
@@ -149,7 +149,7 @@ export default function SpaceSlingshot({ soundEnabled = true }) {
   // Derived Live Telemetry Metrics
   const currentPos = projectilePos || ship;
   const targetDist = Math.round(Math.hypot(currentPos.x - target.x, currentPos.y - target.y));
-  const currentSpeed = Math.round(Math.hypot(projectileVel.x, projectileVel.y) * 60);
+  const currentSpeed = Math.round(Math.hypot(projectileVel?.x || 0, projectileVel?.y || 0) * 60);
 
   // Gravity Vector Calculations
   const individualVectors = calculateIndividualGravitationalAccels(currentPos.x, currentPos.y, level, gravityG);
@@ -173,84 +173,76 @@ export default function SpaceSlingshot({ soundEnabled = true }) {
     y: netVectorEnd.y - arrowHeadLen * Math.sin(netAngle + Math.PI / 6),
   };
 
-  const maxPastTrails = 3;
+  const maxPastTrails = showAllPastTrails ? pastTrails.length : 3;
   const displayedPastTrails = pastTrails.slice(-maxPastTrails).map((trailObj, idx) => ({
     ...trailObj,
     opacity: 0.25 + (idx / maxPastTrails) * 0.45,
   }));
 
   return (
-    <div className="game-container space-theme">
-      {/* Telemetry HUD Badge */}
-      <TelemetryHUD targetDist={targetDist} currentSpeed={currentSpeed} />
-
-      {/* Main SVG Viewport */}
-      <SpaceCanvas
-        svgRef={svgRef}
-        viewBox={viewBox}
-        level={level}
-        angle={angle}
-        power={power}
-        isSimulating={isSimulating}
-        turnOwner={turnOwner}
-        roundCompleted={roundCompleted}
+    <div className={`space-slingshot-viewport ${isFullscreen ? 'is-fullscreen' : ''}`}>
+      {/* Top Telemetry HUD Bar */}
+      <SlingshotTelemetryBar
+        targetDist={targetDist}
+        currentSpeed={currentSpeed}
+        netAccelMag={netMag}
+        score={score || currentScore}
         gameStatus={gameStatus}
-        showGravityGradients={showGravityGradients}
-        showGravityVectors={showGravityVectors}
-        showNetVector={showNetVector}
-        displayedPastTrails={displayedPastTrails}
         enemyAimInfo={enemyAimInfo}
-        enemyTrail={enemyTrail}
-        enemyProjectilePos={enemyProjectilePos}
-        projectilePos={projectilePos}
-        projectileVel={projectileVel}
-        projectileAccel={projectileAccel}
-        trail={trail}
-        individualVectors={individualVectors}
-        netVectorEnd={netVectorEnd}
-        netP1={netP1}
-        netP2={netP2}
-        handlePointerMove={handlePointerMove}
-        handlePointerUp={handlePointerUp}
-        handlePointerDown={handlePointerDown}
+        pastTrails={pastTrails}
+        showAllPastTrails={showAllPastTrails}
+        onTogglePastTrails={() => dispatch({ type: 'TOGGLE_PAST_TRAILS' })}
+        onNewLevel={() => handleNewLevel()}
+        onToggleConfig={() => setIsConfigOpen((v) => !v)}
+        isConfigOpen={isConfigOpen}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={onToggleFullscreen}
       />
 
-      {/* Sidebar Controls Layout */}
-      <div className="controls-layout">
+      {/* Main Game Stage Area */}
+      <div className="space-stage-container">
+        <SpaceCanvas
+          svgRef={svgRef}
+          viewBox={viewBox}
+          level={level}
+          angle={angle}
+          power={power}
+          isSimulating={isSimulating}
+          turnOwner={turnOwner}
+          roundCompleted={roundCompleted}
+          gameStatus={gameStatus}
+          showGravityGradients={showGravityGradients}
+          showGravityVectors={showGravityVectors}
+          showNetVector={showNetVector}
+          displayedPastTrails={displayedPastTrails}
+          enemyAimInfo={enemyAimInfo}
+          enemyTrail={enemyTrail}
+          enemyProjectilePos={enemyProjectilePos}
+          projectilePos={projectilePos}
+          projectileVel={projectileVel}
+          projectileAccel={projectileAccel}
+          trail={trail}
+          individualVectors={individualVectors}
+          netVectorEnd={netVectorEnd}
+          netP1={netP1}
+          netP2={netP2}
+          handlePointerMove={handlePointerMove}
+          handlePointerUp={handlePointerUp}
+          handlePointerDown={handlePointerDown}
+        />
 
-        {/* Turn & Status Header Badges */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <div className={styles.statusBadge}>
-            <div
-              className={`${styles.statusDot} ${
-                gameStatus === 'flying'
-                  ? styles.statusDotFlying
-                  : gameStatus === 'enemy_flying'
-                  ? styles.statusDotEnemy
-                  : styles.statusDotReady
-              }`}
-            />
-            <span>
-              {turnOwner === 'player' && !isSimulating
-                ? 'Your Turn: Aim & Slingshot'
-                : gameStatus === 'flying'
-                ? 'Probe In Flight...'
-                : gameStatus === 'enemy_aiming'
-                ? '👾 Enemy Calculating Trajectory...'
-                : gameStatus === 'enemy_flying'
-                ? '⚠️ Hostile Missile In Flight!'
-                : 'Round Finished'}
-            </span>
-          </div>
+        {/* End of Round Victory/Defeat Summary Banner */}
+        <EndSummaryModal
+          roundCompleted={roundCompleted}
+          shotOutcome={shotOutcome}
+          shotsTaken={shotsTaken}
+          currentScore={currentScore}
+          level={level}
+          handleNewLevel={handleNewLevel}
+        />
 
-          {enemyShip && (
-            <div className={`${styles.statusBadge} ${enemyShip.status === 'active' ? styles.enemyActive : styles.enemyDisabled}`}>
-              <span>{enemyShip.status === 'active' ? '👾 Enemy Interceptor: ACTIVE' : '💥 Enemy Interceptor: DISABLED'}</span>
-            </div>
-          )}
-        </div>
-
-        <LaunchControlsCard
+        {/* Floating Bottom Launch Bar */}
+        <SlingshotLaunchControls
           angle={angle}
           power={power}
           isSimulating={isSimulating}
@@ -262,40 +254,28 @@ export default function SpaceSlingshot({ soundEnabled = true }) {
           handleStopFlight={handleStopFlight}
           handleNewLevel={handleNewLevel}
         />
-
-        <SpaceObjectsToggleCard
-          enableBlackHoles={enableBlackHoles}
-          enableAsteroids={enableAsteroids}
-          enableWormholes={enableWormholes}
-          enablePulsars={enablePulsars}
-          enableBoosters={enableBoosters}
-          enableShields={enableShields}
-          enableEnemyShip={enableEnemyShip}
-          dispatch={dispatch}
-          handleNewLevel={handleNewLevel}
-        />
-
-        <UniverseControlsCard
-          simSpeedScale={simSpeedScale}
-          boardScale={boardScale}
-          gravityG={gravityG}
-          planetCount={planetCount}
-          massMult={massMult}
-          showGravityGradients={showGravityGradients}
-          showGravityVectors={showGravityVectors}
-          showNetVector={showNetVector}
-          dispatch={dispatch}
-          handleNewLevel={handleNewLevel}
-        />
       </div>
 
-      {/* End of Round Victory/Defeat Summary Modal */}
-      <EndSummaryModal
-        roundCompleted={roundCompleted}
-        shotOutcome={shotOutcome}
-        shotsTaken={shotsTaken}
-        currentScore={currentScore}
+      {/* Sliding Universe Config Drawer */}
+      <SlingshotConfigDrawer
+        isOpen={isConfigOpen}
+        onClose={() => setIsConfigOpen(false)}
         level={level}
+        planetCount={planetCount}
+        gravityG={gravityG}
+        simSpeedScale={simSpeedScale}
+        boardScale={boardScale}
+        enableBlackHoles={enableBlackHoles}
+        enableAsteroids={enableAsteroids}
+        enableWormholes={enableWormholes}
+        enablePulsars={enablePulsars}
+        enableBoosters={enableBoosters}
+        enableShields={enableShields}
+        enableEnemyShip={enableEnemyShip}
+        showGravityGradients={showGravityGradients}
+        showGravityVectors={showGravityVectors}
+        showNetVector={showNetVector}
+        dispatch={dispatch}
         handleNewLevel={handleNewLevel}
       />
     </div>

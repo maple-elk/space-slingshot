@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 /**
  * Fixed-size Telemetry HUD Badge overlaid on top right of space canvas
  */
-export function TelemetryHUD({ targetDist, currentSpeed }) {
+export const TelemetryHUD = memo(function TelemetryHUD({ targetDist, currentSpeed }) {
   return (
     <div
       style={{
@@ -31,4 +31,5 @@ export function TelemetryHUD({ targetDist, currentSpeed }) {
       <span style={{ color: '#4ade80' }}>⚡ Speed: {currentSpeed} px/s</span>
     </div>
   );
-}
+});
+

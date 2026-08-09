@@ -38,7 +38,11 @@ export default function App() {
         onToggleFullscreen={handleToggleFullscreen}
       />
       <main style={isFullscreen ? { flex: 1, height: 'calc(100vh - 90px)' } : {}}>
-        <SpaceSlingshot soundEnabled={soundEnabled} isFullscreen={isFullscreen} />
+        <SpaceSlingshot
+          soundEnabled={soundEnabled}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
+        />
       </main>
     </div>
   );

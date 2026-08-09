@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Zap, Eye, EyeOff } from 'lucide-react';
 
-export function UniverseControlsCard({
+export const UniverseControlsCard = memo(function UniverseControlsCard({
   simSpeedScale,
   boardScale,
   gravityG,
@@ -133,4 +133,5 @@ export function UniverseControlsCard({
       </div>
     </div>
   );
-}
+});
+

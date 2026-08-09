@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Compass, Play, RotateCcw } from 'lucide-react';
 
-export function LaunchControlsCard({
+export const LaunchControlsCard = memo(function LaunchControlsCard({
   angle,
   power,
   isSimulating,
@@ -95,4 +95,5 @@ export function LaunchControlsCard({
       </div>
     </div>
   );
-}
+});
+

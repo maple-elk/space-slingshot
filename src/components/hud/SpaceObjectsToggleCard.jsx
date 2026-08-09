@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Sliders } from 'lucide-react';
 
-export function SpaceObjectsToggleCard({
+export const SpaceObjectsToggleCard = memo(function SpaceObjectsToggleCard({
   enableBlackHoles,
   enableAsteroids,
   enableWormholes,
@@ -106,4 +106,5 @@ export function SpaceObjectsToggleCard({
       </div>
     </div>
   );
-}
+});
+

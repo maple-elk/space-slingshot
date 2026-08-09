@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
 
-export function EndSummaryModal({ roundCompleted, shotOutcome, shotsTaken, currentScore, level, handleNewLevel }) {
+export const EndSummaryModal = memo(function EndSummaryModal({ roundCompleted, shotOutcome, shotsTaken, currentScore, level, handleNewLevel }) {
   if (!roundCompleted) return null;
 
   return (
@@ -96,4 +96,5 @@ export function EndSummaryModal({ roundCompleted, shotOutcome, shotsTaken, curre
       </div>
     </div>
   );
-}
+});
+
