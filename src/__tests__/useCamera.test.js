@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDefaultViewBox, calculateTargetViewBox } from '../game/camera/useCamera';
+import { getDefaultViewBox, calculateTargetViewBox, calculateSummaryViewBox } from '../game/camera/useCamera';
 
 describe('Camera ViewBox Calculations', () => {
   it('getDefaultViewBox calculates standard bounds for scale = 1.0', () => {
@@ -31,5 +31,48 @@ describe('Camera ViewBox Calculations', () => {
 
     expect(vb[2]).toBeLessThanOrEqual(6800);
     expect(vb[3]).toBeLessThanOrEqual(4250);
+  });
+
+  it('calculateSummaryViewBox encloses core level objects and past trail history', () => {
+    const level = {
+      ship: { x: 100, y: 300 },
+      target: { x: 900, y: 300 },
+      planets: [{ id: 1, x: 500, y: 300, radius: 40 }],
+    };
+    const pastTrails = [
+      {
+        id: 't1',
+        points: [
+          { x: 100, y: 300 },
+          { x: 400, y: 150 },
+          { x: 900, y: 300 },
+        ],
+      },
+    ];
+
+    const vb = calculateSummaryViewBox(pastTrails, level, 1.0);
+    expect(vb[0]).toBeLessThan(100);
+    expect(vb[0] + vb[2]).toBeGreaterThan(900);
+    expect(vb[1]).toBeLessThan(150);
+  });
+
+  it('calculateSummaryViewBox trims extreme outlier points from shot history', () => {
+    const level = {
+      ship: { x: 100, y: 300 },
+      target: { x: 900, y: 300 },
+      planets: [],
+    };
+
+    // 20 normal points and 1 extreme outlier
+    const normalPoints = Array.from({ length: 20 }, (_, i) => ({ x: 100 + i * 40, y: 300 + (i % 2) * 50 }));
+    const extremePoints = [{ x: 99999, y: -99999 }];
+
+    const pastTrails = [{ id: 't1', points: [...normalPoints, ...extremePoints] }];
+
+    const vb = calculateSummaryViewBox(pastTrails, level, 1.0);
+
+    // Bounding width should be clamped reasonably (< 2800) and NOT expand to 99999
+    expect(vb[2]).toBeLessThanOrEqual(2800);
+    expect(vb[0] + vb[2]).toBeLessThan(50000);
   });
 });

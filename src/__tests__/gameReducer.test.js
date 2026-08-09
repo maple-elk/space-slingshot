@@ -80,4 +80,23 @@ describe('Game State Reducer', () => {
     expect(resetState.pastTrails).toHaveLength(0);
     expect(resetState.level.seed).toBe(999);
   });
+
+  it('persists trail in pastTrails when shot is terminated early (status: stopped)', () => {
+    const activeFlightState = {
+      ...initialGameState,
+      gameStatus: 'flying',
+      trail: [{ x: 100, y: 300 }, { x: 200, y: 250 }, { x: 300, y: 220 }],
+    };
+
+    const nextState = gameReducer(activeFlightState, {
+      type: 'END_SHOT',
+      status: 'stopped',
+    });
+
+    expect(nextState.gameStatus).toBe('stopped');
+    expect(nextState.pastTrails).toHaveLength(1);
+    expect(nextState.pastTrails[0].status).toBe('stopped');
+    expect(nextState.pastTrails[0].points).toEqual(activeFlightState.trail);
+    expect(nextState.trail).toEqual([]);
+  });
 });

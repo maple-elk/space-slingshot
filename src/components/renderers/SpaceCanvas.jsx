@@ -25,22 +25,24 @@ export function SpaceCanvas({
   showGravityGradients,
   showGravityVectors,
   showNetVector,
-  displayedPastTrails,
+  displayedPastTrails = [],
   enemyAimInfo,
-  enemyTrail,
+  enemyTrail = [],
   enemyProjectilePos,
   projectilePos,
   projectileVel,
   projectileAccel,
-  trail,
-  individualVectors,
+  trail = [],
+  individualVectors = [],
+  netMag,
   netVectorEnd,
   netP1,
   netP2,
+  netLabelPos,
   handlePointerMove,
   handlePointerUp,
   handlePointerDown,
-}) {
+} = {}) {
   const {
     ship,
     target,
@@ -134,28 +136,51 @@ export function SpaceCanvas({
         ))}
 
       {/* Historical Past Shot Trails */}
-      {displayedPastTrails.map((past) => (
-        <polyline
-          key={past.id}
-          points={past.points.map((p) => `${p.x},${p.y}`).join(' ')}
-          fill="none"
-          stroke={
-            past.status === 'hit_target'
-              ? '#4ade80'
-              : past.status === 'hit_enemy'
-              ? '#ec4899'
-              : past.status === 'black_hole'
-              ? '#f97316'
-              : past.status === 'hit_planet'
-              ? '#f87171'
-              : '#cbd5e1'
-          }
-          strokeWidth="2"
-          strokeDasharray="4 3"
-          strokeLinecap="round"
-          opacity={past.opacity}
-        />
-      ))}
+      {displayedPastTrails.map((past, idx) => {
+        if (!past.points || past.points.length === 0) return null;
+        const color =
+          past.status === 'hit_target'
+            ? '#4ade80'
+            : past.status === 'hit_enemy'
+            ? '#ec4899'
+            : past.status === 'black_hole'
+            ? '#f97316'
+            : past.status === 'hit_planet'
+            ? '#f87171'
+            : '#cbd5e1';
+
+        const endPt = past.points[past.points.length - 1];
+        const labelText = `#${past.shotNumber || idx + 1}`;
+
+        return (
+          <g key={past.id || idx}>
+            <polyline
+              points={past.points.map((p) => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke={color}
+              strokeWidth="2"
+              strokeDasharray="4 3"
+              strokeLinecap="round"
+              opacity={past.opacity}
+            />
+            {endPt && (
+              <g transform={`translate(${endPt.x}, ${endPt.y})`} opacity={past.opacity}>
+                <circle r="8" fill="rgba(15, 23, 42, 0.85)" stroke={color} strokeWidth="1.2" />
+                <text
+                  textAnchor="middle"
+                  dy="3"
+                  fill={color}
+                  fontSize="8"
+                  fontWeight="800"
+                  fontFamily="sans-serif"
+                >
+                  {labelText}
+                </text>
+              </g>
+            )}
+          </g>
+        );
+      })}
 
       {/* Planets */}
       {planets.map((planet) => (
@@ -297,6 +322,8 @@ export function SpaceCanvas({
           const len = Math.max(12, Math.min(60, v.accelMag * 40));
           const vx = currentPos.x + len * Math.cos(v.angle);
           const vy = currentPos.y + len * Math.sin(v.angle);
+          const textX = currentPos.x + (len + 12) * Math.cos(v.angle);
+          const textY = currentPos.y + (len + 12) * Math.sin(v.angle);
           return (
             <g key={i}>
               <line
@@ -308,16 +335,24 @@ export function SpaceCanvas({
                 strokeWidth="2"
                 opacity="0.85"
               />
-              <text x={vx + 4} y={vy + 4} fill={v.planet.fill} fontSize="10" fontWeight="700">
+              <text
+                x={textX}
+                y={textY}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fill={v.planet.fill}
+                fontSize="10"
+                fontWeight="700"
+              >
                 F{i + 1}
               </text>
             </g>
           );
         })}
 
-      {/* Combined Net Gravity Vector */}
-      {showNetVector && (
-        <g>
+      {/* Combined Net Gravity Vector (F_net) */}
+      {showNetVector && netMag >= 0.05 && netVectorEnd && netP1 && netP2 && netLabelPos && (
+        <g className="net-force-vector">
           <line
             x1={currentPos.x}
             y1={currentPos.y}
@@ -331,15 +366,28 @@ export function SpaceCanvas({
             points={`${netVectorEnd.x},${netVectorEnd.y} ${netP1.x},${netP1.y} ${netP2.x},${netP2.y}`}
             fill="#ffffff"
           />
-          <text
-            x={netVectorEnd.x + 8}
-            y={netVectorEnd.y + 4}
-            fill="#ffffff"
-            fontSize="11"
-            fontWeight="800"
-          >
-            F_net
-          </text>
+          <g transform={`translate(${netLabelPos.x}, ${netLabelPos.y})`}>
+            <rect
+              x="-20"
+              y="-11"
+              width="40"
+              height="21"
+              rx="6"
+              fill="rgba(15, 23, 42, 0.9)"
+              stroke="rgba(255, 255, 255, 0.6)"
+              strokeWidth="1.2"
+            />
+            <text
+              textAnchor="middle"
+              dy="3.5"
+              fill="#ffffff"
+              fontSize="11"
+              fontWeight="800"
+              fontFamily="Fredoka, sans-serif"
+            >
+              F<tspan dy="2" fontSize="9">net</tspan>
+            </text>
+          </g>
         </g>
       )}
     </svg>

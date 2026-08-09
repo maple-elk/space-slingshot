@@ -18,7 +18,7 @@ export const initialGameState = {
   // Visual Toggles
   showGravityGradients: true,
   showGravityVectors: true,
-  showNetVector: true,
+  showNetVector: false,
   showSettingsOverlay: false,
 
   // Level & Physics Layout
@@ -97,10 +97,15 @@ export function gameReducer(state, action) {
       };
 
     case 'END_SHOT': {
+      const trailPoints =
+        action.finalTrail && action.finalTrail.length > 0
+          ? action.finalTrail
+          : state.trail;
+
       const newPastTrail = {
-        id: Date.now(),
+        id: `${Date.now()}_${state.pastTrails.length}`,
         status: action.status,
-        points: action.finalTrail || state.trail,
+        points: trailPoints,
         angle: state.angle,
         power: state.power,
       };
@@ -120,7 +125,7 @@ export function gameReducer(state, action) {
         projectilePos: null,
         projectileVel: null,
         trail: [],
-        pastTrails: [...state.pastTrails, newPastTrail],
+        pastTrails: trailPoints && trailPoints.length > 0 ? [...state.pastTrails, newPastTrail] : state.pastTrails,
         score: newScore,
         roundCompleted: action.status === 'hit_target' || action.status === 'hit_enemy',
         showEndSummary: action.status === 'hit_target' || action.status === 'hit_enemy',

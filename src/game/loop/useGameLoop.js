@@ -124,7 +124,7 @@ export function useGameLoop({
     updateCameraTarget(null);
 
     if (gameStatus === 'flying') {
-      finalizeShot('stopped', []);
+      finalizeShot('stopped');
     } else if (gameStatus === 'enemy_flying') {
       dispatch({ type: 'END_ENEMY_SHOT', status: 'idle' });
     }

@@ -370,10 +370,12 @@ export function calculateIndividualGravitationalAccels(x, y, level, gravityG = D
       return { planet: p, ax: 0, ay: 0, accelMag: 0, angle: 0, dist };
     }
 
-    const accelMag = (gravityG * p.mass) / Math.max(distSq, 400);
-    const angle = Math.atan2(dy, dx);
-    const ax = accelMag * (dx / dist);
-    const ay = accelMag * (dy / dist);
+    const rawAccel = (gravityG * p.mass) / Math.max(distSq, 400);
+    const accelMag = Math.abs(rawAccel);
+    const rawAngle = Math.atan2(dy, dx);
+    const angle = rawAccel < 0 ? rawAngle + Math.PI : rawAngle;
+    const ax = rawAccel * (dx / dist);
+    const ay = rawAccel * (dy / dist);
 
     return {
       planet: p,

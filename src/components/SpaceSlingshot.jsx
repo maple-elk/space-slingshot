@@ -71,9 +71,16 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
   }, [soundEnabled]);
 
   // Camera System
-  const { viewBox, updateCameraTarget, resetCamera } = useCamera(boardScale);
+  const { viewBox, updateCameraTarget, updateCameraForSummary, resetCamera } = useCamera(boardScale);
 
   const { ship, target, planets = [] } = level;
+
+  // Trigger camera zoom out to fit shot history on round completion
+  useEffect(() => {
+    if (roundCompleted) {
+      updateCameraForSummary(pastTrails, level);
+    }
+  }, [roundCompleted, pastTrails, level, updateCameraForSummary]);
 
   // Level Generator Trigger
   const handleNewLevel = useCallback(
@@ -157,7 +164,7 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
 
   const netMag = Math.hypot(netAccel.x, netAccel.y);
   const netAngle = Math.atan2(netAccel.y, netAccel.x);
-  const netVectorLength = Math.max(16, Math.min(80, netMag * 45));
+  const netVectorLength = netMag < 0.05 ? 0 : Math.max(16, Math.min(80, netMag * 45));
   const netVectorEnd = {
     x: currentPos.x + netVectorLength * Math.cos(netAngle),
     y: currentPos.y + netVectorLength * Math.sin(netAngle),
@@ -172,11 +179,18 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
     x: netVectorEnd.x - arrowHeadLen * Math.cos(netAngle + Math.PI / 6),
     y: netVectorEnd.y - arrowHeadLen * Math.sin(netAngle + Math.PI / 6),
   };
+  const netLabelPos = {
+    x: currentPos.x + (netVectorLength + 16) * Math.cos(netAngle),
+    y: currentPos.y + (netVectorLength + 16) * Math.sin(netAngle),
+  };
 
-  const maxPastTrails = showAllPastTrails ? pastTrails.length : 3;
+  const showAll = showAllPastTrails || roundCompleted;
+  const maxPastTrails = showAll ? pastTrails.length : 3;
+  const startIndex = pastTrails.length - maxPastTrails;
   const displayedPastTrails = pastTrails.slice(-maxPastTrails).map((trailObj, idx) => ({
     ...trailObj,
-    opacity: 0.25 + (idx / maxPastTrails) * 0.45,
+    shotNumber: startIndex + idx + 1,
+    opacity: roundCompleted ? 0.8 : 0.25 + (idx / maxPastTrails) * 0.45,
   }));
 
   return (
@@ -223,21 +237,24 @@ export default function SpaceSlingshot({ soundEnabled = true, isFullscreen = fal
           projectileAccel={projectileAccel}
           trail={trail}
           individualVectors={individualVectors}
+          netMag={netMag}
           netVectorEnd={netVectorEnd}
           netP1={netP1}
           netP2={netP2}
+          netLabelPos={netLabelPos}
           handlePointerMove={handlePointerMove}
           handlePointerUp={handlePointerUp}
           handlePointerDown={handlePointerDown}
         />
 
-        {/* End of Round Victory/Defeat Summary Banner */}
+        {/* End of Round Summary Floating Glass Card */}
         <EndSummaryModal
           roundCompleted={roundCompleted}
           shotOutcome={shotOutcome}
-          shotsTaken={shotsTaken}
-          currentScore={currentScore}
+          shotsTaken={pastTrails.length || shotsTaken || 1}
+          currentScore={score || currentScore || 0}
           level={level}
+          pastTrails={pastTrails}
           handleNewLevel={handleNewLevel}
         />
 

@@ -58,6 +58,122 @@ export function calculateTargetViewBox(activePos, boardScale = 1.0) {
 }
 
 /**
+ * Calculates a reasonable viewBox to include core level objects and the majority of shot history paths,
+ * filtering out extreme outliers.
+ * @param {Array} pastTrails - List of past shot trail objects
+ * @param {Object} level - Level object containing ship, target, planets, enemyShip
+ * @param {number} boardScale - Solar system board scale
+ * @returns {[number, number, number, number]} [minX, minY, width, height]
+ */
+export function calculateSummaryViewBox(pastTrails = [], level = {}, boardScale = 1.0) {
+  const { ship, target, planets = [], enemyShip } = level;
+
+  // Baseline core points (ship, target, planets, enemyShip)
+  const corePoints = [];
+  if (ship) corePoints.push({ x: ship.x, y: ship.y });
+  if (target) corePoints.push({ x: target.x, y: target.y });
+  if (enemyShip) corePoints.push({ x: enemyShip.x, y: enemyShip.y });
+  planets.forEach((p) => {
+    corePoints.push({ x: p.x - p.radius, y: p.y - p.radius });
+    corePoints.push({ x: p.x + p.radius, y: p.y + p.radius });
+  });
+
+  if (corePoints.length === 0) {
+    return getDefaultViewBox(boardScale);
+  }
+
+  let minX = Math.min(...corePoints.map((p) => p.x));
+  let maxX = Math.max(...corePoints.map((p) => p.x));
+  let minY = Math.min(...corePoints.map((p) => p.y));
+  let maxY = Math.max(...corePoints.map((p) => p.y));
+
+  // Collect trail points across all past trails
+  const allTrailXs = [];
+  const allTrailYs = [];
+
+  pastTrails.forEach((trailObj) => {
+    if (trailObj?.points && Array.isArray(trailObj.points)) {
+      trailObj.points.forEach((pt) => {
+        if (typeof pt.x === 'number' && typeof pt.y === 'number') {
+          allTrailXs.push(pt.x);
+          allTrailYs.push(pt.y);
+        }
+      });
+    }
+  });
+
+  if (allTrailXs.length > 0 && allTrailYs.length > 0) {
+    allTrailXs.sort((a, b) => a - b);
+    allTrailYs.sort((a, b) => a - b);
+
+    // IQR (Interquartile Range) outlier filtering
+    const getQuartiles = (arr) => {
+      const q1 = arr[Math.floor(arr.length * 0.25)];
+      const q3 = arr[Math.floor(arr.length * 0.75)];
+      return { q1, q3, iqr: q3 - q1 };
+    };
+
+    const xStats = getQuartiles(allTrailXs);
+    const yStats = getQuartiles(allTrailYs);
+
+    const xLowCut = xStats.q1 - 1.5 * Math.max(xStats.iqr, 150);
+    const xHighCut = xStats.q3 + 1.5 * Math.max(xStats.iqr, 150);
+
+    const yLowCut = yStats.q1 - 1.5 * Math.max(yStats.iqr, 150);
+    const yHighCut = yStats.q3 + 1.5 * Math.max(yStats.iqr, 150);
+
+    const filteredXs = allTrailXs.filter((x) => x >= xLowCut && x <= xHighCut);
+    const filteredYs = allTrailYs.filter((y) => y >= yLowCut && y <= yHighCut);
+
+    if (filteredXs.length > 0) {
+      minX = Math.min(minX, filteredXs[0]);
+      maxX = Math.max(maxX, filteredXs[filteredXs.length - 1]);
+    }
+    if (filteredYs.length > 0) {
+      minY = Math.min(minY, filteredYs[0]);
+      maxY = Math.max(maxY, filteredYs[filteredYs.length - 1]);
+    }
+  }
+
+  const margin = 140 * boardScale;
+  minX -= margin;
+  maxX += margin;
+  minY -= margin;
+  maxY += margin;
+
+  let w = maxX - minX;
+  let h = maxY - minY;
+
+  // Enforce 1.6 aspect ratio
+  const aspect = 1.6;
+  if (w / h < aspect) {
+    w = h * aspect;
+    const cx = (minX + maxX) / 2;
+    minX = cx - w / 2;
+  } else {
+    h = w / aspect;
+    const cy = (minY + maxY) / 2;
+    minY = cy - h / 2;
+  }
+
+  // Reasonably clamp camera bounds so extreme outliers don't shrink the scene endlessly
+  const MAX_W = 2800 * boardScale;
+  const MAX_H = 1750 * boardScale;
+  if (w > MAX_W) {
+    const cx = minX + w / 2;
+    w = MAX_W;
+    minX = cx - w / 2;
+  }
+  if (h > MAX_H) {
+    const cy = minY + h / 2;
+    h = MAX_H;
+    minY = cy - h / 2;
+  }
+
+  return [minX, minY, w, h];
+}
+
+/**
  * Dedicated Camera LERP & Dynamic Zoom Hook for Space Slingshot
  * @param {number} boardScale - Solar system board scale (0.6x to 1.8x)
  * @returns {Object} Camera control state and methods
@@ -72,6 +188,13 @@ export function useCamera(boardScale = 1.0) {
   const updateCameraTarget = useCallback(
     (activePos) => {
       targetViewBoxRef.current = calculateTargetViewBox(activePos, boardScale);
+    },
+    [boardScale]
+  );
+
+  const updateCameraForSummary = useCallback(
+    (pastTrails, level) => {
+      targetViewBoxRef.current = calculateSummaryViewBox(pastTrails, level, boardScale);
     },
     [boardScale]
   );
@@ -119,6 +242,7 @@ export function useCamera(boardScale = 1.0) {
   return {
     viewBox,
     updateCameraTarget,
+    updateCameraForSummary,
     resetCamera,
     currentViewBoxRef,
     targetViewBoxRef,

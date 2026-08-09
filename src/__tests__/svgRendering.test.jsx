@@ -10,6 +10,7 @@ import { BoosterRenderer } from '../components/renderers/BoosterRenderer';
 import { ShieldRenderer } from '../components/renderers/ShieldRenderer';
 import { EnemyShipRenderer } from '../components/renderers/EnemyShipRenderer';
 import { TargetRenderer } from '../components/renderers/TargetRenderer';
+import { SpaceCanvas } from '../components/renderers/SpaceCanvas';
 
 describe('SVG Renderer Components Structural Tests', () => {
   it('renders PlanetRenderer SVG markup correctly', () => {
@@ -84,5 +85,48 @@ describe('SVG Renderer Components Structural Tests', () => {
     const html = renderToString(<svg><TargetRenderer target={target} /></svg>);
 
     expect(html).toContain('translate(900, 300)');
+  });
+
+  it('renders net force vector F_net with subscript when showNetVector is true and force is significant', () => {
+    const level = { ship: { x: 100, y: 300 }, target: { x: 900, y: 300, radius: 24 }, planets: [] };
+    const html = renderToString(
+      <SpaceCanvas
+        viewBox={[0, 0, 960, 600]}
+        level={level}
+        angle={0}
+        power={50}
+        showNetVector={true}
+        netMag={0.5}
+        netVectorEnd={{ x: 150, y: 300 }}
+        netP1={{ x: 140, y: 295 }}
+        netP2={{ x: 140, y: 305 }}
+        netLabelPos={{ x: 165, y: 300 }}
+        individualVectors={[]}
+      />
+    );
+
+    expect(html).toContain('net-force-vector');
+    expect(html).toContain('F<tspan dy="2" font-size="9">net</tspan>');
+  });
+
+  it('does not render net force vector when netMag is under threshold (< 0.05)', () => {
+    const level = { ship: { x: 100, y: 300 }, target: { x: 900, y: 300, radius: 24 }, planets: [] };
+    const html = renderToString(
+      <SpaceCanvas
+        viewBox={[0, 0, 960, 600]}
+        level={level}
+        angle={0}
+        power={50}
+        showNetVector={true}
+        netMag={0.01}
+        netVectorEnd={{ x: 100, y: 300 }}
+        netP1={{ x: 100, y: 300 }}
+        netP2={{ x: 100, y: 300 }}
+        netLabelPos={{ x: 100, y: 300 }}
+        individualVectors={[]}
+      />
+    );
+
+    expect(html).not.toContain('net-force-vector');
   });
 });
