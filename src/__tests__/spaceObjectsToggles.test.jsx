@@ -84,4 +84,38 @@ describe('Space Objects Toggle Checkboxes & Config Drawer Integration', () => {
     expect(newLevel.asteroids.length).toBeGreaterThan(0);
     expect(newLevel.wormholes.length).toBeGreaterThan(0);
   });
+
+  it('SlingshotConfigDrawer renders drawer overlay when isOpen is true', () => {
+    const state = {
+      enableSolarOrbit: true,
+      enableBlackHoles: true,
+      gravityG: 300,
+      boardScale: 1.0,
+      simSpeedScale: 1.0,
+    };
+
+    const openHtml = renderToString(
+      <SlingshotConfigDrawer
+        isOpen={true}
+        state={state}
+        dispatch={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    expect(openHtml).toContain('slingshot-config-drawer');
+    expect(openHtml).toContain('Universe Config &amp; Settings');
+    expect(openHtml).toContain('Enable Solar Orbit Mode');
+
+    const closedHtml = renderToString(
+      <SlingshotConfigDrawer
+        isOpen={false}
+        state={state}
+        dispatch={() => {}}
+        onClose={() => {}}
+      />
+    );
+
+    expect(closedHtml).toBe('');
+  });
 });

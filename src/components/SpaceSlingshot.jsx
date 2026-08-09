@@ -442,14 +442,13 @@ export default function SpaceSlingshot({
       </div>
 
       {/* Slingshot Configuration Drawer Modal */}
-      {isConfigOpen && (
-        <SlingshotConfigDrawer
-          state={state}
-          dispatch={dispatch}
-          onClose={() => setIsConfigOpen(false)}
-          onApplyNewConfig={(cfg) => handleNewLevel(cfg)}
-        />
-      )}
+      <SlingshotConfigDrawer
+        isOpen={isConfigOpen}
+        state={state}
+        dispatch={dispatch}
+        onClose={() => setIsConfigOpen(false)}
+        handleNewLevel={(cfg) => handleNewLevel(cfg)}
+      />
 
       {/* End of Round Summary Modal */}
       {state.showEndSummary && (

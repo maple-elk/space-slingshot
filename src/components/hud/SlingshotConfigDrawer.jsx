@@ -1,36 +1,45 @@
 import React from 'react';
 import { X, Sliders, Sparkles, Globe, Eye, Clock, Sun } from 'lucide-react';
 
-export function SlingshotConfigDrawer({
-  isOpen,
-  onClose,
-  level,
-  planetCount,
-  gravityG,
-  simSpeedScale,
-  boardScale,
-  enableBlackHoles,
-  enableAsteroids,
-  enableWormholes,
-  enablePulsars,
-  enableBoosters,
-  enableShields,
-  enableEnemyShip,
-  enableSolarOrbit = false,
-  launcherVelocityMode = 'stationary',
-  showOrbitRings = true,
-  sunMass = 1200,
-  showGravityGradients,
-  showGravityVectors,
-  showNetVector,
-  dispatch,
-  handleNewLevel,
-}) {
+export function SlingshotConfigDrawer(props) {
+  const {
+    isOpen,
+    onClose,
+    dispatch,
+    handleNewLevel,
+    onApplyNewConfig,
+  } = props;
+
+  const s = props.state || props;
+
+  const {
+    planetCount,
+    gravityG = 300,
+    simSpeedScale = 1.0,
+    boardScale = 1.0,
+    enableBlackHoles = false,
+    enableAsteroids = false,
+    enableWormholes = false,
+    enablePulsars = false,
+    enableBoosters = false,
+    enableShields = false,
+    enableEnemyShip = false,
+    enableSolarOrbit = false,
+    launcherVelocityMode = 'stationary',
+    showOrbitRings = true,
+    sunMass = 1200,
+    showGravityGradients = false,
+    showGravityVectors = false,
+    showNetVector = false,
+  } = s;
+
   if (!isOpen) return null;
+
+  const applyNewConfig = handleNewLevel || onApplyNewConfig;
 
   const handleToggleObject = (key, value) => {
     dispatch({ type: 'SET_SETTING', key, value });
-    handleNewLevel({ [key]: value });
+    if (applyNewConfig) applyNewConfig({ [key]: value });
   };
 
   return (
