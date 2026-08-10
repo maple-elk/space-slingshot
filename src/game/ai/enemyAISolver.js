@@ -1,4 +1,5 @@
 import { simulateTrajectory } from './trajectorySimulator';
+import { analyzeLevelSolutions } from './levelSolver';
 import { DEFAULT_G } from '../../utils/physics';
 
 /**
@@ -9,10 +10,58 @@ import { DEFAULT_G } from '../../utils/physics';
  * @param {import('../../types/entitySchemas').Ship} playerShip 
  * @param {import('../../types/entitySchemas').Level} level 
  * @param {number} [gravityG] 
+ * @param {number} [skillLevel=0.5]
  * @returns {import('../../types/entitySchemas').TrajectoryShot|null}
  */
-export function calculateSmartEnemyAim(enemyShip, playerShip, level, gravityG = DEFAULT_G) {
+export function calculateSmartEnemyAim(
+  enemyShip,
+  playerShip,
+  level,
+  gravityG = DEFAULT_G,
+  skillLevel = 0.5
+) {
   if (!enemyShip || enemyShip.status !== 'active') return null;
+
+  if (skillLevel > 0.7) {
+    const fullAnalysis = analyzeLevelSolutions(level, {
+      angleSteps: 120,
+      powerSteps: 12,
+      maxFrames: 900,
+      shooter: 'enemy',
+      gravityG,
+    });
+
+    if (fullAnalysis.solutions.length > 0) {
+      const sortedByCurve = [...fullAnalysis.solutions].sort(
+        (a, b) => b.totalTurnDeg - a.totalTurnDeg
+      );
+      const seedHash = Math.abs(
+        Math.sin((enemyShip.x * 13 + enemyShip.y * 37 + playerShip.x * 7) * 0.01)
+      );
+
+      const choiceIdx = Math.floor(seedHash * Math.min(3, sortedByCurve.length));
+      const selectedSol = sortedByCurve[choiceIdx] || sortedByCurve[0];
+      const archetypeName =
+        selectedSol.totalTurnDeg > 180
+          ? '☠️ Nightmare Orbital Trick Shot'
+          : '🎯 High-Skill Precision Intercept';
+      const rad = (selectedSol.angleDeg * Math.PI) / 180;
+
+      return {
+        archetype: 'smart_enemy',
+        archetypeName,
+        angleDeg: Math.round(selectedSol.angleDeg),
+        power: selectedSol.power,
+        initialVel: {
+          x: (selectedSol.power / 4.8) * Math.cos(rad),
+          y: (selectedSol.power / 4.8) * Math.sin(rad),
+        },
+        simOutcome: 'hit_player',
+        minDistance: 0,
+        totalTurnDeg: selectedSol.totalTurnDeg,
+      };
+    }
+  }
 
   const dx = playerShip.x - enemyShip.x;
   const dy = playerShip.y - enemyShip.y;

@@ -28,6 +28,9 @@ describe('Headless Trajectory Simulator', () => {
     expect(result.outcome).toBe('hit_player');
     expect(result.minDistance).toBeLessThan(18);
     expect(result.frames).toBeLessThan(250);
+    expect(result.totalTurnDeg).toBeDefined();
+    expect(result.totalTurnDeg).toBeLessThan(1.0);
+    expect(result.loops).toBe(0);
   });
 
   it('forward-simulates player shot toward target', () => {
@@ -41,5 +44,8 @@ describe('Headless Trajectory Simulator', () => {
 
     expect(result.outcome).toBe('target');
     expect(result.minDistance).toBeLessThan(30); // Target hit threshold is radius + 6 = 30
+    expect(result.totalTurnDeg).toBeDefined();
+    expect(result.totalTurnDeg).toBeLessThan(1.0);
+    expect(result.loops).toBe(0);
   });
 });

@@ -2,6 +2,7 @@ import { DEFAULT_G, generateRandomLevel } from '../utils/physics';
 
 export const initialGameState = {
   // Settings & Customization
+  difficultyTier: 'auto',
   planetCount: 'auto',
   gravityG: DEFAULT_G,
   massMult: 1.0,
@@ -23,6 +24,7 @@ export const initialGameState = {
 
   // Level & Physics Layout
   level: generateRandomLevel(960, 600, {
+    difficultyTier: 'auto',
     planetCount: 'auto',
     massMult: 1.0,
     enableBlackHoles: false,

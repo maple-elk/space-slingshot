@@ -10,6 +10,7 @@ import { SpaceCanvas } from './renderers/SpaceCanvas';
 import { SlingshotTelemetryBar } from './hud/SlingshotTelemetryBar';
 import { SlingshotConfigDrawer } from './hud/SlingshotConfigDrawer';
 import { EndSummaryModal } from './hud/EndSummaryModal';
+import { LevelGenerationModal } from './hud/LevelGenerationModal';
 
 export default function SpaceSlingshot({
   soundEnabled = true,
@@ -19,6 +20,7 @@ export default function SpaceSlingshot({
 }) {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isGeneratingLevel, setIsGeneratingLevel] = useState(false);
   const svgRef = useRef(null);
 
   const {
@@ -42,6 +44,7 @@ export default function SpaceSlingshot({
     simSpeedScale,
     boardScale,
     gravityG,
+    difficultyTier,
     planetCount,
     massMult,
     enableBlackHoles,
@@ -79,31 +82,37 @@ export default function SpaceSlingshot({
   // Level Generator Trigger
   const handleNewLevel = useCallback(
     (customConfig) => {
-      const bScale = customConfig?.boardScale !== undefined ? customConfig.boardScale : boardScale;
-      const cfg = {
-        planetCount,
-        massMult,
-        boardScale: bScale,
-        enableBlackHoles,
-        enableAsteroids,
-        enableWormholes,
-        enablePulsars,
-        enableBoosters,
-        enableShields,
-        enableEnemyShip,
-        ...customConfig,
-      };
+      setIsGeneratingLevel(true);
+      setTimeout(() => {
+        const bScale = customConfig?.boardScale !== undefined ? customConfig.boardScale : boardScale;
+        const cfg = {
+          planetCount,
+          massMult,
+          boardScale: bScale,
+          difficultyTier,
+          enableBlackHoles,
+          enableAsteroids,
+          enableWormholes,
+          enablePulsars,
+          enableBoosters,
+          enableShields,
+          enableEnemyShip,
+          ...customConfig,
+        };
 
-      const newLvl = generateRandomLevel(960, 600, cfg);
+        const newLvl = generateRandomLevel(960, 600, cfg);
 
-      dispatch({ type: 'RESET_LEVEL', newLevel: newLvl });
-      resetCamera(bScale);
-      gameEvents.emit('SNAP');
+        dispatch({ type: 'RESET_LEVEL', newLevel: newLvl });
+        resetCamera(bScale);
+        gameEvents.emit('SNAP');
+        setIsGeneratingLevel(false);
+      }, 50);
     },
     [
       boardScale,
       planetCount,
       massMult,
+      difficultyTier,
       enableBlackHoles,
       enableAsteroids,
       enableWormholes,
@@ -305,6 +314,9 @@ export default function SpaceSlingshot({
           onDismiss={() => dispatch({ type: 'DISMISS_SUMMARY' })}
         />
       )}
+
+      {/* Async Level Generation Spinner Modal */}
+      <LevelGenerationModal isOpen={isGeneratingLevel} difficultyTier={difficultyTier} />
     </div>
   );
 }

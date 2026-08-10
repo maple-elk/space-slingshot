@@ -19,57 +19,17 @@ export function mulberry32(seed) {
   };
 }
 
+import { analyzeLevelSolutions, evaluateMapDifficulty } from '../game/ai/levelSolver';
+
 // Headless level solvability verification helper
 export function verifyLevelSolvability(level, gravityG = DEFAULT_G) {
-  const { ship, target } = level;
-  if (!ship || !target) return true;
-
-  const angles = [];
-  for (let a = 0; a < 360; a += 15) angles.push(a);
-  const powers = [45, 75, 110, 150, 190];
-
-  for (const angleDeg of angles) {
-    for (const power of powers) {
-      let pos = { x: ship.x, y: ship.y };
-      const rad = (angleDeg * Math.PI) / 180;
-      let vel = {
-        x: (power / 4.8) * Math.cos(rad),
-        y: (power / 4.8) * Math.sin(rad),
-      };
-      let warpCooldown = 0;
-      const boostedIds = new Set();
-
-      for (let frame = 1; frame <= 380; frame++) {
-        const physRes = updateProjectilePhysics(
-          pos,
-          vel,
-          level,
-          0.016,
-          gravityG,
-          1.0,
-          warpCooldown,
-          boostedIds
-        );
-        pos = physRes.pos;
-        vel = physRes.vel;
-        warpCooldown = physRes.warpCooldown;
-
-        const collision = checkCollisions(pos, vel, level, 'player');
-        if (collision.type === 'shield_bounce') {
-          vel = collision.reflectedVel;
-          continue;
-        }
-        if (collision.type === 'target') {
-          return true;
-        }
-        if (collision.type !== 'none') {
-          break;
-        }
-      }
-    }
-  }
-
-  return false;
+  const { solutionCount } = analyzeLevelSolutions(level, {
+    angleSteps: 24,
+    powerSteps: 5,
+    maxFrames: 380,
+    gravityG,
+  });
+  return solutionCount > 0;
 }
 
 // Generate random level layout with 360° rotational variety, obstacle occlusion, and guaranteed solvability
@@ -79,21 +39,36 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
   const sW = width * boardScale;
   const sH = height * boardScale;
   const gravityG = config.gravityG !== undefined ? Number(config.gravityG) : DEFAULT_G;
+  const requestedTier = config.difficultyTier || 'auto';
+  const budgetMap = {
+    easy: 15,
+    medium: 30,
+    hard: 60,
+    extreme: 150,
+    nightmare: 300,
+    auto: 15,
+  };
+  const maxAttempts = budgetMap[requestedTier] || 15;
+
+  const TIER_RANKS = { easy: 1, medium: 2, hard: 3, extreme: 4, nightmare: 5, unrated: 99 };
+  const targetRank = TIER_RANKS[requestedTier] || 0;
 
   let bestLevel = null;
-  const maxAttempts = 15;
+  let bestScoreDiff = Infinity;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const currentSeed = (baseSeed + attempt * 10007) & 0x7fffffff;
     const rng = mulberry32(currentSeed);
 
+    const isExtremeOrNightmare = requestedTier === 'extreme' || requestedTier === 'nightmare';
     const countSetting = config.planetCount || 'auto';
     const numPlanets =
       countSetting === 'auto'
-        ? 2 + Math.floor(rng() * 2)
+        ? (isExtremeOrNightmare ? 3 + Math.floor(rng() * 3) : 2 + Math.floor(rng() * 2))
         : Math.max(1, Math.min(5, Number(countSetting)));
 
-    const massMult = config.massMult ? Number(config.massMult) : 1.0;
+    const baseMassMult = config.massMult ? Number(config.massMult) : 1.0;
+    const massMult = isExtremeOrNightmare ? baseMassMult * 1.6 : baseMassMult;
 
     // Canvas Playable Boundaries (clear of edges & bottom HUD)
     const marginX = 80 * boardScale;
@@ -158,9 +133,9 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     const occupiedList = [];
 
     const planetColors = [
-      { fill: '#ec4899', glow: 'rgba(236, 72, 153, 0.35)', name: 'Magenta Prime' },
-      { fill: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.35)', name: 'Aetheria' },
-      { fill: '#3b82f6', glow: 'rgba(59, 130, 246, 0.35)', name: 'Neptuna' },
+      { fill: '#3b82f6', glow: 'rgba(59, 130, 246, 0.35)', name: 'Oceanus' },
+      { fill: '#ef4444', glow: 'rgba(239, 68, 68, 0.35)', name: 'Ares Prime' },
+      { fill: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.35)', name: 'Nebula Alpha' },
       { fill: '#f59e0b', glow: 'rgba(245, 158, 11, 0.35)', name: 'Helios Jr' },
       { fill: '#10b981', glow: 'rgba(16, 185, 129, 0.35)', name: 'Verdant' },
     ];
@@ -189,7 +164,9 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
           const normX = -(target.y - ship.y);
           const normY = target.x - ship.x;
           const normLen = Math.hypot(normX, normY) || 1;
-          const offsetDist = (rng() > 0.5 ? 1 : -1) * (30 + rng() * 70) * Math.sqrt(boardScale);
+          const offsetDist = isExtremeOrNightmare
+            ? (rng() > 0.5 ? 1 : -1) * (rng() * 20) * Math.sqrt(boardScale)
+            : (rng() > 0.5 ? 1 : -1) * (30 + rng() * 70) * Math.sqrt(boardScale);
           px = mx + (normX / normLen) * offsetDist;
           py = my + (normY / normLen) * offsetDist;
         } else {
@@ -218,7 +195,8 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     }
 
     // Optional Space Phenomena
-    if (config.enableBlackHoles) {
+    const shouldEnableBlackHoles = config.enableBlackHoles ?? (isExtremeOrNightmare && rng() > 0.5);
+    if (shouldEnableBlackHoles) {
       let bx, by;
       let attempts = 0;
       do {
@@ -239,21 +217,29 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       occupiedList.push(bh);
     }
 
-    if (config.enableAsteroids) {
+    const shouldEnableAsteroids = config.enableAsteroids ?? isExtremeOrNightmare;
+    if (shouldEnableAsteroids) {
       let ax, ay;
-      let attempts = 0;
-      do {
-        ax = minX + rng() * (maxX - minX);
-        ay = minY + rng() * (maxY - minY);
-        attempts++;
-      } while (isPositionOccupied(ax, ay, 85 * Math.sqrt(boardScale)) && attempts < 120);
+      if (isExtremeOrNightmare) {
+        // Place blocking asteroid near sightline
+        const t = 0.4 + rng() * 0.2;
+        ax = ship.x + (target.x - ship.x) * t + (rng() - 0.5) * 30;
+        ay = ship.y + (target.y - ship.y) * t + (rng() - 0.5) * 30;
+      } else {
+        let attempts = 0;
+        do {
+          ax = minX + rng() * (maxX - minX);
+          ay = minY + rng() * (maxY - minY);
+          attempts++;
+        } while (isPositionOccupied(ax, ay, 85 * Math.sqrt(boardScale)) && attempts < 120);
+      }
 
       const ast = {
         id: 'ast_1',
         x: Math.round(ax),
         y: Math.round(ay),
-        radius: 68,
-        dragFactor: 0.983,
+        radius: 50,
+        dragFactor: 0.95,
       };
       asteroids.push(ast);
       occupiedList.push(ast);
@@ -381,12 +367,37 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       enemyShip,
     };
 
-    if (!bestLevel) bestLevel = candidateLevel;
+    // Rule 5: Solvability & Difficulty Verification Pass
+    const isSolvableCoarse = verifyLevelSolvability(candidateLevel, gravityG);
+    if (isSolvableCoarse) {
+      const difficultyRating = evaluateMapDifficulty(candidateLevel, { gravityG });
+      candidateLevel.difficultyRating = difficultyRating;
 
-    // Rule 5: Solvability Verification Pass
-    if (verifyLevelSolvability(candidateLevel, gravityG)) {
-      return candidateLevel;
+      if (difficultyRating.tier !== 'unrated') {
+        if (!bestLevel) {
+          bestLevel = candidateLevel;
+          if (targetRank > 0) {
+            bestScoreDiff = Math.abs(TIER_RANKS[difficultyRating.tier] - targetRank);
+          }
+        } else if (targetRank > 0) {
+          const scoreDiff = Math.abs(TIER_RANKS[difficultyRating.tier] - targetRank);
+          if (scoreDiff < bestScoreDiff) {
+            bestScoreDiff = scoreDiff;
+            bestLevel = candidateLevel;
+          }
+        }
+
+        if (requestedTier === 'auto') {
+          return candidateLevel;
+        } else if (difficultyRating.tier === requestedTier) {
+          return candidateLevel;
+        }
+      }
     }
+  }
+
+  if (bestLevel && !bestLevel.difficultyRating) {
+    bestLevel.difficultyRating = evaluateMapDifficulty(bestLevel, { gravityG });
   }
 
   return bestLevel;

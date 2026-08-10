@@ -20,6 +20,7 @@ export function SlingshotConfigDrawer(props) {
   const s = props.state || props;
 
   const {
+    difficultyTier = 'auto',
     planetCount,
     gravityG = 300,
     simSpeedScale = 1.0,
@@ -34,6 +35,7 @@ export function SlingshotConfigDrawer(props) {
     showGravityGradients = false,
     showGravityVectors = false,
     showNetVector = false,
+    level,
   } = s;
 
   if (!isOpen) return null;
@@ -115,6 +117,65 @@ export function SlingshotConfigDrawer(props) {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* SECTION 0.5: Difficulty Tier & Complexity Rating */}
+          <div className="config-section" style={{ borderLeft: '3px solid #a855f7', paddingLeft: '12px' }}>
+            <div className="section-header">
+              <Sparkles size={16} color="#a855f7" />
+              <span style={{ color: '#a855f7', fontWeight: '800' }}>Difficulty & Map Complexity</span>
+            </div>
+
+            <div className="planet-cnt-buttons" style={{ marginTop: '8px' }}>
+              {[
+                { id: 'auto', label: 'Auto (Adaptive)' },
+                { id: 'easy', label: '🟢 Easy' },
+                { id: 'medium', label: '🟡 Medium' },
+                { id: 'hard', label: '🔴 Hard' },
+                { id: 'extreme', label: '⚡ Extreme' },
+                { id: 'nightmare', label: '☠️ Nightmare' },
+              ].map((tierItem) => (
+                <button
+                  key={tierItem.id}
+                  className={`preset-btn ${difficultyTier === tierItem.id ? 'active' : ''}`}
+                  style={{ padding: '6px 8px', fontSize: '0.78rem' }}
+                  onClick={() => {
+                    dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: tierItem.id });
+                    if (applyNewConfig) applyNewConfig({ difficultyTier: tierItem.id });
+                  }}
+                >
+                  {tierItem.label}
+                </button>
+              ))}
+            </div>
+
+            {level?.difficultyRating && (
+              <div
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: 'rgba(168, 85, 247, 0.12)',
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <div style={{ fontWeight: '700', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>
+                    {level.difficultyRating.tierEmoji} {level.difficultyRating.tierLabel} Tier
+                  </span>
+                  <span style={{ color: level.difficultyRating.solvable ? '#4ade80' : '#ef4444' }}>
+                    {level.difficultyRating.solvable ? '✓ Solvable' : '⚠ Unsolvable'}
+                  </span>
+                </div>
+                <div style={{ opacity: 0.85, fontSize: '0.74rem' }}>
+                  Min Turn: {Math.round(level.difficultyRating.minTurnDeg)}° | Max Turn: {Math.round(level.difficultyRating.maxTurnDeg)}° | Window: {level.difficultyRating.windowDensity.toFixed(2)}% ({level.difficultyRating.solutionCount} solutions)
+                </div>
+              </div>
+            )}
           </div>
 
           {/* SECTION 1: Optional Celestial Objects */}

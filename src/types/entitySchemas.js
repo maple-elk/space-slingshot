@@ -109,6 +109,20 @@
  */
 
 /**
+ * @typedef {Object} DifficultyRating
+ * @property {'easy'|'medium'|'hard'|'extreme'|'nightmare'} tier
+ * @property {string} tierEmoji
+ * @property {string} tierLabel
+ * @property {number} solutionCount
+ * @property {number} windowDensity
+ * @property {number} minTurnDeg
+ * @property {number} maxTurnDeg
+ * @property {number} maxLoops
+ * @property {boolean} hasDirectShot
+ * @property {boolean} solvable
+ */
+
+/**
  * @typedef {Object} Level
  * @property {number} [seed] - Seed used for PRNG generation
  * @property {Ship} ship - Player starting position
@@ -121,6 +135,7 @@
  * @property {BoosterGate[]} boosters - Array of speed booster gates
  * @property {ShieldMoon[]} shields - Array of elastic shield moons
  * @property {EnemyShip|null} enemyShip - Optional hostile enemy ship
+ * @property {DifficultyRating} [difficultyRating] - Solve complexity analysis
  */
 
 /**

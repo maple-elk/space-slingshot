@@ -37,6 +37,9 @@ export function simulateTrajectory({
   let minDistance = Math.hypot(pos.x - targetPoint.x, pos.y - targetPoint.y);
   const points = [{ ...pos }];
 
+  let prevAngle = Math.atan2(vel.y, vel.x);
+  let totalTurnDeg = 0;
+
   for (let frame = 1; frame <= maxFrames; frame++) {
     const physRes = updateProjectilePhysics(
       pos,
@@ -53,6 +56,13 @@ export function simulateTrajectory({
     vel = physRes.vel;
     warpCooldown = physRes.warpCooldown;
     points.push({ ...pos });
+
+    const currAngle = Math.atan2(vel.y, vel.x);
+    let delta = currAngle - prevAngle;
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+    if (delta < -Math.PI) delta += 2 * Math.PI;
+    totalTurnDeg += Math.abs(delta) * (180 / Math.PI);
+    prevAngle = currAngle;
 
     const curTargetPoint = shooter === 'enemy' ? level.ship : level.target;
     const currentDist = Math.hypot(pos.x - curTargetPoint.x, pos.y - curTargetPoint.y);
@@ -75,6 +85,8 @@ export function simulateTrajectory({
         frames: frame,
         finalPos: pos,
         points,
+        totalTurnDeg,
+        loops: Math.floor(totalTurnDeg / 360),
       };
     }
   }
@@ -86,5 +98,7 @@ export function simulateTrajectory({
     frames: maxFrames,
     finalPos: pos,
     points,
+    totalTurnDeg,
+    loops: Math.floor(totalTurnDeg / 360),
   };
 }

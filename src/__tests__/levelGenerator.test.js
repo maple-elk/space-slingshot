@@ -129,5 +129,21 @@ describe('Level Generator & Seeded PRNG', () => {
       expect(isSolvable).toBe(true);
     }
   });
+
+  it('attaches difficultyRating metadata and respects requested difficulty tiers', () => {
+    const tiers = ['easy', 'medium', 'hard', 'extreme', 'nightmare'];
+    for (const tier of tiers) {
+      const startTime = Date.now();
+      const level = generateRandomLevel(960, 600, {
+        seed: 1234,
+        difficultyTier: tier,
+      });
+      const duration = Date.now() - startTime;
+
+      expect(level.difficultyRating).toBeDefined();
+      expect(level.difficultyRating.solvable).toBe(true);
+      expect(duration).toBeLessThan(10000); // Must complete within reasonable time
+    }
+  }, 15000);
 });
 

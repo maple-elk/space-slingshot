@@ -10,14 +10,31 @@ export const UniverseControlsCard = memo(function UniverseControlsCard({
   showGravityGradients,
   showGravityVectors,
   showNetVector,
+  level,
   dispatch,
   handleNewLevel,
 }) {
   return (
     <div className="side-card">
-      <div className="card-title">
-        <Zap size={20} color="var(--color-corner-c)" />
-        <span>Universe Physics & Camera Controls</span>
+      <div className="card-title" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Zap size={20} color="var(--color-corner-c)" />
+          <span>Universe Physics & Controls</span>
+        </div>
+        {level?.difficultyRating && (
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: '700',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: '#c7d2fe',
+            }}
+          >
+            {level.difficultyRating.tierEmoji} {level.difficultyRating.tierLabel}
+          </span>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
