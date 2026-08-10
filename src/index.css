@@ -219,12 +219,12 @@ body {
 }
 
 .is-fullscreen .svg-viewport.space-viewport {
-  height: calc(100vh - 90px);
+  height: calc(100vh - 20px);
 }
 
 .is-fullscreen .canvas-card {
   padding: 12px;
-  height: calc(100vh - 90px);
+  height: calc(100vh - 20px);
 }
 
 /* Floating Overlay Glassmorphic Cards */
@@ -571,7 +571,7 @@ body {
 }
 
 .space-slingshot-viewport.is-fullscreen {
-  height: calc(100vh - 90px);
+  height: calc(100vh - 20px);
 }
 
 /* Telemetry Header Bar */
@@ -584,6 +584,8 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-bg-card-border);
   padding: 10px 18px;
+  min-height: 52px;
+  box-sizing: border-box;
   border-radius: var(--radius-md);
   gap: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -989,18 +991,31 @@ body {
 
 @media (max-width: 768px) {
   .slingshot-telemetry-bar {
-    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 10px;
+    min-height: 48px;
   }
+
   .telemetry-stats {
     display: none;
   }
-  .slingshot-launch-bar {
-    flex-direction: column;
-    width: calc(100% - 16px);
-    bottom: 8px;
-    padding: 8px 12px;
+
+  .telemetry-launch-controls input[type="range"] {
+    width: 65px !important;
   }
+}
+
+@media (max-width: 520px) {
   .hide-on-mobile {
+    display: none !important;
+  }
+
+  .slingshot-telemetry-bar {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .btn-config-prominent span {
     display: none;
   }
 }

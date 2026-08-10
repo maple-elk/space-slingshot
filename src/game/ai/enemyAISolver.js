@@ -2,8 +2,8 @@ import { simulateTrajectory } from './trajectorySimulator';
 import { DEFAULT_G } from '../../utils/physics';
 
 /**
- * Intelligent Multi-Candidate Trajectory AI Solver
- * Simulates candidate trajectories headlessly using trajectorySimulator and picks optimal shot.
+ * Intelligent & Varied Enemy AI Aim Solver
+ * Simulates candidate trajectories and selects interesting, close-call, or curved shots.
  * 
  * @param {import('../../types/entitySchemas').EnemyShip} enemyShip 
  * @param {import('../../types/entitySchemas').Ship} playerShip 
@@ -20,14 +20,13 @@ export function calculateSmartEnemyAim(enemyShip, playerShip, level, gravityG = 
   const baseAngleDeg = ((baseAngleRad * 180) / Math.PI + 360) % 360;
 
   const candidateAngles = [];
-  // Sample candidate angles around base angle (-45° to +45° in 5° steps)
-  for (let offset = -45; offset <= 45; offset += 5) {
+  // Sample candidate angles around base angle (-50° to +50° in 5° steps)
+  for (let offset = -50; offset <= 50; offset += 5) {
     candidateAngles.push((baseAngleDeg + offset + 360) % 360);
   }
 
-  const candidatePowers = [35, 50, 70, 95, 125, 155, 185];
-  let bestCandidate = null;
-  let bestScore = -Infinity;
+  const candidatePowers = [40, 60, 85, 115, 145, 175];
+  const validCandidates = [];
 
   for (const angleDeg of candidateAngles) {
     for (const power of candidatePowers) {
@@ -41,32 +40,75 @@ export function calculateSmartEnemyAim(enemyShip, playerShip, level, gravityG = 
         shooter: 'enemy',
       });
 
-      let score = -sim.minDistance; // Closer to player = higher score
+      // Filter out immediate obstacle collisions
+      if (sim.outcome === 'planet' || sim.outcome === 'black_hole') continue;
 
-      if (sim.outcome === 'hit_player') {
-        score += 5000; // Priority: direct hit
-      } else if (sim.outcome === 'planet' || sim.outcome === 'black_hole') {
-        score -= 500; // Penalty: premature collision
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        const rad = (angleDeg * Math.PI) / 180;
-        bestCandidate = {
-          archetype: 'solver',
-          archetypeName: sim.outcome === 'hit_player' ? '🎯 Precision Lock-On' : '🪐 Calculated Gravity Curve',
-          angleDeg: Math.round(angleDeg),
-          power,
-          initialVel: {
-            x: (power / 4.8) * Math.cos(rad),
-            y: (power / 4.8) * Math.sin(rad),
-          },
-          simOutcome: sim.outcome,
-          minDistance: Math.round(sim.minDistance),
-        };
-      }
+      validCandidates.push({
+        angleDeg,
+        power,
+        outcome: sim.outcome,
+        minDistance: sim.minDistance,
+      });
     }
   }
 
-  return bestCandidate;
+  if (validCandidates.length === 0) {
+    // Fallback direct line aim
+    const rad = (baseAngleDeg * Math.PI) / 180;
+    return {
+      archetype: 'direct',
+      archetypeName: '🚀 Direct Intercept',
+      angleDeg: Math.round(baseAngleDeg),
+      power: 80,
+      initialVel: { x: (80 / 4.8) * Math.cos(rad), y: (80 / 4.8) * Math.sin(rad) },
+      simOutcome: 'out_of_bounds',
+      minDistance: Math.round(Math.hypot(dx, dy)),
+    };
+  }
+
+  // Categorize candidates for varied gameplay
+  const directHits = validCandidates.filter((c) => c.outcome === 'hit_player');
+  const closeCalls = validCandidates.filter((c) => c.minDistance >= 30 && c.minDistance <= 110);
+  const generalShots = [...validCandidates].sort((a, b) => a.minDistance - b.minDistance);
+
+  // Deterministic seed choice based on level seed & positions to prevent jitter
+  const seedHash = Math.abs(Math.sin((enemyShip.x * 13 + enemyShip.y * 37 + playerShip.x * 7) * 0.01));
+  
+  let selected = null;
+  let archetypeName = '🪐 Gravity Arc Attempt';
+
+  if (seedHash < 0.40 && closeCalls.length > 0) {
+    // 40% chance: Pick a dramatic Close Call near-miss (sweeps past ship)
+    const idx = Math.floor((seedHash / 0.40) * closeCalls.length);
+    selected = closeCalls[idx];
+    archetypeName = '⚡ Close Call Sweeping Pass';
+  } else if (seedHash < 0.70 && directHits.length > 0) {
+    // 30% chance: Direct hit attempt with slight natural variance (+/- 2.5 deg)
+    const rawHit = directHits[Math.floor(((seedHash - 0.40) / 0.30) * directHits.length)];
+    const angleOffset = (seedHash > 0.55 ? 2.5 : -2.5);
+    selected = {
+      ...rawHit,
+      angleDeg: (rawHit.angleDeg + angleOffset + 360) % 360,
+    };
+    archetypeName = '🎯 Targeted Intercept';
+  } else {
+    // 30% chance: Pick top 3 closest trajectory arc
+    const topIdx = Math.min(2, Math.floor(((seedHash - 0.70) / 0.30) * generalShots.length));
+    selected = generalShots[topIdx] || generalShots[0];
+    archetypeName = '🪐 Gravity Arc Attempt';
+  }
+
+  const rad = (selected.angleDeg * Math.PI) / 180;
+  return {
+    archetype: 'smart_enemy',
+    archetypeName,
+    angleDeg: Math.round(selected.angleDeg),
+    power: selected.power,
+    initialVel: {
+      x: (selected.power / 4.8) * Math.cos(rad),
+      y: (selected.power / 4.8) * Math.sin(rad),
+    },
+    simOutcome: selected.outcome,
+    minDistance: Math.round(selected.minDistance),
+  };
 }

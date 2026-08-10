@@ -1,5 +1,5 @@
-import React, { memo, useState } from 'react';
-import { Play, RotateCcw, ChevronUp, ChevronDown } from 'lucide-react';
+import React, { memo } from 'react';
+import { Play, RotateCcw } from 'lucide-react';
 
 export const EndSummaryModal = memo(function EndSummaryModal({
   roundCompleted,
@@ -10,188 +10,134 @@ export const EndSummaryModal = memo(function EndSummaryModal({
   pastTrails = [],
   handleNewLevel,
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
   if (!roundCompleted) return null;
 
-  const isSuccess = shotOutcome === 'hit_target' || shotOutcome === 'hit_enemy';
+  const isSuccess = shotOutcome === 'hit_target';
 
   const titleText =
     shotOutcome === 'hit_target'
-      ? 'Target Reached'
-      : shotOutcome === 'hit_enemy'
-      ? 'Enemy Neutralized'
+      ? 'Target Reached!'
       : shotOutcome === 'hit_player'
-      ? 'Probe Intercepted'
+      ? 'Probe Intercepted!'
       : shotOutcome === 'black_hole'
-      ? 'Black Hole Collision'
+      ? 'Black Hole Collision!'
       : shotOutcome === 'hit_planet'
-      ? 'Planet Impact'
-      : 'Flight Terminated';
+      ? 'Planet Impact!'
+      : 'Flight Terminated!';
 
-  const subtitleText = isSuccess
-    ? `Completed successfully in ${shotsTaken} shot(s).`
-    : `Round ended after ${shotsTaken} shot(s).`;
+  const iconEmoji =
+    shotOutcome === 'hit_target'
+      ? '🎯'
+      : shotOutcome === 'black_hole'
+      ? '🕳️'
+      : '💥';
+
+  const totalShots = pastTrails.length > 0 ? pastTrails.length : shotsTaken;
 
   return (
     <div
       style={{
         position: 'absolute',
-        top: '16px',
+        bottom: '84px',
         left: '50%',
         transform: 'translateX(-50%)',
-        zIndex: 50,
+        zIndex: 40,
         width: '92%',
-        maxWidth: '540px',
+        maxWidth: '680px',
         pointerEvents: 'none',
       }}
     >
       <div
-        className="glass-panel"
         style={{
           pointerEvents: 'auto',
-          background: 'rgba(15, 23, 42, 0.92)',
+          background: 'rgba(15, 23, 42, 0.88)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          border: isSuccess ? '1.5px solid rgba(74, 222, 128, 0.5)' : '1.5px solid rgba(248, 113, 113, 0.5)',
-          borderRadius: '20px',
-          padding: '16px 20px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.65)',
+          border: isSuccess
+            ? '1.5px solid rgba(74, 222, 128, 0.6)'
+            : '1.5px solid rgba(248, 113, 113, 0.6)',
+          borderRadius: '16px',
+          padding: '10px 18px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          transition: 'all 0.25s ease-in-out',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          fontFamily: 'Outfit, sans-serif',
         }}
       >
-        {/* Top Header Row with Outcome Icon & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                fontSize: '1.6rem',
-                width: '42px',
-                height: '42px',
-                borderRadius: '12px',
-                background: isSuccess ? 'rgba(74, 222, 128, 0.15)' : 'rgba(248, 113, 113, 0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {shotOutcome === 'hit_target'
-                ? '🎯'
-                : shotOutcome === 'hit_enemy'
-                ? '🚀'
-                : shotOutcome === 'black_hole'
-                ? '🕳️'
-                : '💥'}
+        {/* Outcome & Stats Info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              fontSize: '1.5rem',
+              width: '38px',
+              height: '38px',
+              borderRadius: '10px',
+              background: isSuccess ? 'rgba(74, 222, 128, 0.18)' : 'rgba(248, 113, 113, 0.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {iconEmoji}
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{titleText}</span>
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', margin: 0, fontWeight: 700, color: '#f8fafc' }}>
-                {titleText}
-              </h2>
-              <p style={{ color: 'var(--color-text-subtle)', margin: 0, fontSize: '0.85rem' }}>
-                {subtitleText}
-              </p>
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'flex', gap: '12px', marginTop: '2px' }}>
+              <span>Shots: <strong style={{ color: '#38bdf8' }}>{totalShots}</strong></span>
+              <span>Score: <strong style={{ color: '#fbbf24' }}>{currentScore}</strong></span>
+              <span>Planets: <strong style={{ color: '#10b981' }}>{level.planets?.length || 0}</strong></span>
             </div>
           </div>
+        </div>
+
+        {/* Spacebar to Continue Action Badge & Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            className="btn-primary"
+            onClick={() => handleNewLevel()}
+            style={{
+              padding: '8px 16px',
+              fontSize: '0.88rem',
+              whiteSpace: 'nowrap',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: isSuccess
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+            }}
+          >
+            <Play size={15} />
+            <span>Next Level</span>
+            <span
+              style={{
+                fontSize: '0.72rem',
+                opacity: 0.9,
+                background: 'rgba(0,0,0,0.25)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                marginLeft: '4px',
+                fontWeight: 600,
+              }}
+            >
+              [Space]
+            </span>
+          </button>
 
           <button
             className="btn-icon"
-            onClick={() => setIsCollapsed((v) => !v)}
-            title={isCollapsed ? 'Expand Summary' : 'Collapse Summary'}
-            style={{ padding: '6px' }}
+            onClick={() => handleNewLevel()}
+            title="Retry Level"
+            style={{ padding: '8px 10px' }}
           >
-            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+            <RotateCcw size={15} />
           </button>
         </div>
-
-        {/* Collapsible Content Section */}
-        {!isCollapsed && (
-          <>
-            {/* Stats Metrics Bar */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '12px',
-                background: 'rgba(255, 255, 255, 0.04)',
-                padding: '10px 16px',
-                borderRadius: '12px',
-                textAlign: 'center',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-subtle)', textTransform: 'uppercase' }}>Shots</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-corner-a)' }}>{shotsTaken}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-subtle)', textTransform: 'uppercase' }}>Score</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-accent-gold)' }}>{currentScore}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-text-subtle)', textTransform: 'uppercase' }}>Planets</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-corner-b)' }}>{level.planets?.length || 0}</div>
-              </div>
-            </div>
-
-            {/* Shots History List Summary */}
-            {pastTrails && pastTrails.length > 0 && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  flexWrap: 'wrap',
-                  maxHeight: '64px',
-                  overflowY: 'auto',
-                  paddingRight: '4px',
-                }}
-              >
-                {pastTrails.map((tr, idx) => (
-                  <span
-                    key={tr.id || idx}
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '4px 8px',
-                      borderRadius: '6px',
-                      background:
-                        tr.status === 'hit_target'
-                          ? 'rgba(74, 222, 128, 0.2)'
-                          : tr.status === 'hit_enemy'
-                          ? 'rgba(236, 72, 153, 0.2)'
-                          : tr.status === 'black_hole'
-                          ? 'rgba(249, 115, 22, 0.2)'
-                          : 'rgba(255, 255, 255, 0.08)',
-                      color:
-                        tr.status === 'hit_target'
-                          ? '#4ade80'
-                          : tr.status === 'hit_enemy'
-                          ? '#ec4899'
-                          : tr.status === 'black_hole'
-                          ? '#f97316'
-                          : '#cbd5e1',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    #{idx + 1}: {Math.round(tr.angle || 0)}° @ {Math.round(tr.power || 0)}%
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-              <button className="btn-primary" style={{ flex: 1, padding: '10px 16px' }} onClick={() => handleNewLevel()}>
-                <Play size={16} />
-                <span>Next Solar System</span>
-              </button>
-              <button className="btn-icon" style={{ padding: '10px 14px' }} onClick={() => handleNewLevel()}>
-                <RotateCcw size={16} />
-                <span>Retry</span>
-              </button>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

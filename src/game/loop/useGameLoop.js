@@ -1,24 +1,21 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { updateProjectilePhysics, checkCollisions, calculateEnemyAim } from '../../utils/physics';
-import { updateProjectilePhysics as updateProjectilePhysics3D, checkCollisions as checkCollisions3D, calculateEnemyAim as calculateEnemyAim3D, calculateInitialVelocity } from '../../utils/physics3d';
+import { updateProjectilePhysics, checkCollisions } from '../../utils/physics';
+import { calculateSmartEnemyAim } from '../ai/enemyAISolver';
 import { gameEvents } from '../../utils/EventBus';
 
 /**
- * Dedicated Game Loop & Animation Hook for Space Slingshot (2D, 3D, and Solar Orbit)
+ * Dedicated Game Loop & Animation Hook for Space Slingshot (2D)
  */
 export function useGameLoop({
   gameStatus,
   turnOwner,
   roundCompleted,
   angle,
-  pitch = 12,
-  yaw = 350,
   power,
   level,
   gravityG,
   simSpeedScale,
   enableEnemyShip,
-  launcherVelocityMode = 'stationary',
   dispatch,
   updateCameraTarget,
   handleNewLevel,
@@ -29,26 +26,23 @@ export function useGameLoop({
   const levelRef = useRef(level);
   levelRef.current = level;
 
-  const posRef = useRef({ x: 0, y: 0, z: 0 });
-  const velRef = useRef({ x: 0, y: 0, z: 0 });
+  const posRef = useRef({ x: 0, y: 0 });
+  const velRef = useRef({ x: 0, y: 0 });
   const localTrailRef = useRef([]);
   const warpCooldownRef = useRef(0);
 
-  const enemyPosRef = useRef({ x: 0, y: 0, z: 0 });
-  const enemyVelRef = useRef({ x: 0, y: 0, z: 0 });
+  const enemyPosRef = useRef({ x: 0, y: 0 });
+  const enemyVelRef = useRef({ x: 0, y: 0 });
   const enemyWarpCooldownRef = useRef(0);
 
   const { ship = { x: 0, y: 0 }, enemyShip } = level;
-  const is3D = ship.z !== undefined;
 
   // Trigger Enemy Counter-Attack Turn
   const triggerEnemyTurn = useCallback(() => {
     if (!enemyShip || enemyShip.status !== 'active') return;
 
     const currentLvl = levelRef.current;
-    const aimResult = is3D
-      ? calculateEnemyAim3D(enemyShip, ship, currentLvl, gravityG)
-      : calculateEnemyAim(enemyShip, ship, currentLvl, gravityG);
+    const aimResult = calculateSmartEnemyAim(enemyShip, ship, currentLvl, gravityG);
 
     if (!aimResult) return;
 
@@ -58,34 +52,32 @@ export function useGameLoop({
       gameEvents.emit('POP');
       dispatch({ type: 'START_ENEMY_FLIGHT' });
 
-      enemyPosRef.current = { x: enemyShip.x, y: enemyShip.y, z: enemyShip.z || 0 };
+      enemyPosRef.current = { x: enemyShip.x, y: enemyShip.y };
       enemyVelRef.current = aimResult.initialVel;
       enemyWarpCooldownRef.current = 0;
       const enemyBoostedIds = new Set();
+      let enemyFrameCount = 0;
+      const MAX_ENEMY_FRAMES = 500; // Timeout after ~8.3 seconds of flight
 
       const enemyLoop = () => {
+        enemyFrameCount++;
+        if (enemyFrameCount > MAX_ENEMY_FRAMES) {
+          dispatch({ type: 'END_ENEMY_SHOT', status: 'idle' });
+          updateCameraTarget(null);
+          return;
+        }
+
         const activeLvl = levelRef.current;
-        const result = is3D
-          ? updateProjectilePhysics3D(
-              enemyPosRef.current,
-              enemyVelRef.current,
-              activeLvl,
-              0.016,
-              gravityG,
-              simSpeedScale,
-              enemyWarpCooldownRef.current,
-              enemyBoostedIds
-            )
-          : updateProjectilePhysics(
-              enemyPosRef.current,
-              enemyVelRef.current,
-              activeLvl,
-              0.016,
-              gravityG,
-              simSpeedScale,
-              enemyWarpCooldownRef.current,
-              enemyBoostedIds
-            );
+        const result = updateProjectilePhysics(
+          enemyPosRef.current,
+          enemyVelRef.current,
+          activeLvl,
+          0.016,
+          gravityG,
+          simSpeedScale,
+          enemyWarpCooldownRef.current,
+          enemyBoostedIds
+        );
 
         enemyPosRef.current = result.pos;
         enemyVelRef.current = result.vel;
@@ -99,9 +91,7 @@ export function useGameLoop({
 
         updateCameraTarget(result.pos);
 
-        const collision = is3D
-          ? checkCollisions3D(result.pos, result.vel, activeLvl, 'enemy')
-          : checkCollisions(result.pos, result.vel, activeLvl, 'enemy', 960, 600);
+        const collision = checkCollisions(result.pos, result.vel, activeLvl, 'enemy', 960, 600);
 
         if (collision.type === 'hit_player') {
           gameEvents.emit('SNAP');
@@ -121,7 +111,7 @@ export function useGameLoop({
 
       enemyAnimRef.current = requestAnimationFrame(enemyLoop);
     }, 850);
-  }, [is3D, enemyShip, ship, gravityG, simSpeedScale, updateCameraTarget, dispatch]);
+  }, [enemyShip, ship, gravityG, simSpeedScale, updateCameraTarget, dispatch]);
 
   // Finalize player shot and trigger enemy turn if applicable
   const finalizeShot = useCallback(
@@ -169,22 +159,12 @@ export function useGameLoop({
 
     gameEvents.emit('POP');
 
-    let initialVel;
-    if (is3D) {
-      initialVel = calculateInitialVelocity(pitch, yaw, power);
-    } else {
-      const rad = (angle * Math.PI) / 180;
-      let vx = (power / 4.8) * Math.cos(rad);
-      let vy = (power / 4.8) * Math.sin(rad);
+    const rad = (angle * Math.PI) / 180;
+    const vx = (power / 4.8) * Math.cos(rad);
+    const vy = (power / 4.8) * Math.sin(rad);
 
-      if (launcherVelocityMode === 'orbital' && ship.vx !== undefined && ship.vy !== undefined) {
-        vx += ship.vx;
-        vy += ship.vy;
-      }
-      initialVel = { x: vx, y: vy };
-    }
-
-    const startPos = is3D ? { x: ship.x, y: ship.y, z: ship.z } : { x: ship.x, y: ship.y };
+    const initialVel = { x: vx, y: vy };
+    const startPos = { x: ship.x, y: ship.y };
 
     posRef.current = startPos;
     velRef.current = initialVel;
@@ -192,7 +172,7 @@ export function useGameLoop({
     warpCooldownRef.current = 0;
 
     dispatch({ type: 'LAUNCH_PLAYER', pos: startPos, vel: initialVel });
-  }, [is3D, pitch, yaw, gameStatus, turnOwner, roundCompleted, angle, power, ship, launcherVelocityMode, handleNewLevel, dispatch]);
+  }, [gameStatus, turnOwner, roundCompleted, angle, power, ship, handleNewLevel, dispatch]);
 
   // Player Physics Animation Loop
   useEffect(() => {
@@ -202,27 +182,16 @@ export function useGameLoop({
 
     const loop = () => {
       const activeLvl = levelRef.current;
-      const result = is3D
-        ? updateProjectilePhysics3D(
-            posRef.current,
-            velRef.current,
-            activeLvl,
-            0.016,
-            gravityG,
-            simSpeedScale,
-            warpCooldownRef.current,
-            boostedBoosterIds
-          )
-        : updateProjectilePhysics(
-            posRef.current,
-            velRef.current,
-            activeLvl,
-            0.016,
-            gravityG,
-            simSpeedScale,
-            warpCooldownRef.current,
-            boostedBoosterIds
-          );
+      const result = updateProjectilePhysics(
+        posRef.current,
+        velRef.current,
+        activeLvl,
+        0.016,
+        gravityG,
+        simSpeedScale,
+        warpCooldownRef.current,
+        boostedBoosterIds
+      );
 
       posRef.current = result.pos;
       velRef.current = result.vel;
@@ -235,13 +204,11 @@ export function useGameLoop({
         accel: result.accel,
       });
 
-      const pt = is3D ? { x: result.pos.x, y: result.pos.y, z: result.pos.z } : { x: result.pos.x, y: result.pos.y };
+      const pt = { x: result.pos.x, y: result.pos.y };
       localTrailRef.current.push(pt);
       updateCameraTarget(result.pos);
 
-      const collision = is3D
-        ? checkCollisions3D(result.pos, result.vel, activeLvl, 'player')
-        : checkCollisions(result.pos, result.vel, activeLvl, 'player', 960, 600);
+      const collision = checkCollisions(result.pos, result.vel, activeLvl, 'player', 960, 600);
 
       if (collision.type === 'target') {
         gameEvents.emit('VICTORY');
@@ -285,7 +252,7 @@ export function useGameLoop({
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [is3D, gameStatus, gravityG, simSpeedScale, finalizeShot, updateCameraTarget, dispatch]);
+  }, [gameStatus, gravityG, simSpeedScale, finalizeShot, updateCameraTarget, dispatch]);
 
   return {
     handleLaunch,

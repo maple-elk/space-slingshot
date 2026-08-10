@@ -104,8 +104,8 @@ describe('Space Objects Toggle Checkboxes & Config Drawer Integration', () => {
     );
 
     expect(openHtml).toContain('slingshot-config-drawer');
-    expect(openHtml).toContain('Universe Config &amp; Settings');
-    expect(openHtml).toContain('Enable Solar Orbit Mode');
+    expect(openHtml).toContain('Game Menu &amp; Settings');
+    expect(openHtml).toContain('Celestial Objects');
 
     const closedHtml = renderToString(
       <SlingshotConfigDrawer

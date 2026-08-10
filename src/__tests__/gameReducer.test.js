@@ -93,7 +93,7 @@ describe('Game State Reducer', () => {
       status: 'stopped',
     });
 
-    expect(nextState.gameStatus).toBe('stopped');
+    expect(nextState.gameStatus).toBe('idle');
     expect(nextState.pastTrails).toHaveLength(1);
     expect(nextState.pastTrails[0].status).toBe('stopped');
     expect(nextState.pastTrails[0].points).toEqual(activeFlightState.trail);

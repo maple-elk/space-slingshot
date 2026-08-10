@@ -151,7 +151,7 @@ describe('SVG Renderer Components Structural Tests', () => {
     expect(htmlWithTrail).toContain('stroke="#ef4444"');
     expect(htmlWithTrail).toContain('points="800,200 500,250 100,300"');
 
-    const htmlWithPredicted = renderToString(
+    const htmlWithIdleEnemy = renderToString(
       <SpaceCanvas
         viewBox={[0, 0, 960, 600]}
         level={activeEnemyLevel}
@@ -161,8 +161,7 @@ describe('SVG Renderer Components Structural Tests', () => {
       />
     );
 
-    expect(htmlWithPredicted).toContain('stroke="#ef4444"');
-    expect(htmlWithPredicted).toContain('<polyline');
+    expect(htmlWithIdleEnemy).not.toContain('<polyline');
   });
 
   it('does not render enemy path when enemy ship is disabled', () => {

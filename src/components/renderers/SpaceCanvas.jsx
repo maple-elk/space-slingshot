@@ -8,8 +8,7 @@ import { BoosterRenderer } from './BoosterRenderer';
 import { ShieldRenderer } from './ShieldRenderer';
 import { EnemyShipRenderer } from './EnemyShipRenderer';
 import { TargetRenderer } from './TargetRenderer';
-import { SunRenderer } from './SunRenderer';
-import { calculateEnemyAim } from '../../utils/physics';
+import { calculateSmartEnemyAim } from '../../game/ai/enemyAISolver';
 import { simulateTrajectory } from '../../game/ai/trajectorySimulator';
 
 /**
@@ -28,8 +27,6 @@ export function SpaceCanvas({
   showGravityGradients,
   showGravityVectors,
   showNetVector,
-  showOrbitRings = true,
-  launcherVelocityMode = 'stationary',
   displayedPastTrails = [],
   enemyAimInfo,
   enemyTrail = [],
@@ -49,7 +46,6 @@ export function SpaceCanvas({
   handlePointerDown,
 } = {}) {
   const {
-    sun,
     ship,
     target,
     planets = [],
@@ -62,26 +58,10 @@ export function SpaceCanvas({
     enemyShip,
   } = level;
 
-  // Enemy Trajectory Path (Fired Trail or Predicted Aim Path when active)
+  // Enemy Trajectory Path (Only visible during shot's travel and as fading line after)
   let activeEnemyPath = [];
-  if (enemyShip && enemyShip.status === 'active') {
-    if (enemyTrail && enemyTrail.length > 1) {
-      activeEnemyPath = enemyTrail;
-    } else {
-      const aim = enemyAimInfo || calculateEnemyAim(enemyShip, ship, level);
-      if (aim) {
-        const sim = simulateTrajectory({
-          startPos: enemyShip,
-          angleDeg: aim.angleDeg,
-          power: aim.power,
-          level,
-          shooter: 'enemy',
-        });
-        if (sim && sim.points) {
-          activeEnemyPath = sim.points;
-        }
-      }
-    }
+  if (enemyShip && enemyShip.status === 'active' && enemyTrail && enemyTrail.length > 1) {
+    activeEnemyPath = enemyTrail;
   }
 
   // Aiming vector end point in SVG
@@ -106,22 +86,6 @@ export function SpaceCanvas({
   }
 
   const currentPos = projectilePos || ship;
-
-  // Orbit tracks list
-  const orbitItems = sun && showOrbitRings
-    ? [
-        ship,
-        target,
-        ...planets,
-        ...blackHoles,
-        ...asteroids,
-        ...wormholes,
-        ...pulsars,
-        ...boosters,
-        ...shields,
-        ...(enemyShip ? [enemyShip] : []),
-      ].filter((item) => item && item.orbitRadius)
-    : [];
 
   return (
     <svg
@@ -165,24 +129,6 @@ export function SpaceCanvas({
         height={viewBox[3] + 40000}
         fill="url(#spaceBg)"
       />
-
-      {/* Central Sun */}
-      {sun && <SunRenderer sun={sun} />}
-
-      {/* Faint Dashed Orbital Path Tracks */}
-      {orbitItems.map((item, idx) => (
-        <circle
-          key={`orbit_track_${item.id || 'item'}_${idx}`}
-          cx={sun.x}
-          cy={sun.y}
-          r={item.orbitRadius}
-          fill="none"
-          stroke="rgba(255, 255, 255, 0.12)"
-          strokeWidth="1.2"
-          strokeDasharray="4 4"
-          style={{ pointerEvents: 'none' }}
-        />
-      ))}
 
       {/* Gravity Field Gradients */}
       {showGravityGradients &&
@@ -319,20 +265,6 @@ export function SpaceCanvas({
       {/* Aiming Vector Line & Drag Handle */}
       {!isSimulating && turnOwner === 'player' && !roundCompleted && (
         <g>
-          {/* Orbital momentum inherited combined vector line */}
-          {launcherVelocityMode === 'orbital' && ship.vx !== undefined && (
-            <line
-              x1={ship.x}
-              y1={ship.y}
-              x2={ship.x + (power / 4.8 * Math.cos(rad) + ship.vx) * 18.5}
-              y2={ship.y + (power / 4.8 * Math.sin(rad) + ship.vy) * 18.5}
-              stroke="#ec4899"
-              strokeWidth="2.5"
-              strokeDasharray="3 3"
-              strokeLinecap="round"
-              opacity="0.8"
-            />
-          )}
 
           <line
             x1={ship.x}

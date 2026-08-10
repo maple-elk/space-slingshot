@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, EyeOff, Sliders, Maximize2, Minimize2, RotateCcw, Pause, Play } from 'lucide-react';
+import { Eye, EyeOff, Sliders, Maximize2, Minimize2, RotateCcw, Volume2, VolumeX, Play, Compass } from 'lucide-react';
 
 export function SlingshotTelemetryBar({
   targetDist,
@@ -10,118 +10,124 @@ export function SlingshotTelemetryBar({
   enemyAimInfo,
   pastTrails,
   showAllPastTrails,
-  enableSolarOrbit,
-  isOrbitPaused,
-  onTogglePauseOrbits,
   onTogglePastTrails,
   onNewLevel,
   onToggleConfig,
   isConfigOpen,
+  soundEnabled,
+  onToggleSound,
   isFullscreen,
   onToggleFullscreen,
+  // Launch Control Props
+  angle = 335,
+  power = 55,
+  isSimulating = false,
+  turnOwner = 'player',
+  roundCompleted = false,
+  dispatch,
+  handleLaunch,
+  handleStopFlight,
 }) {
+  const isLaunchDisabled = isSimulating || turnOwner !== 'player' || roundCompleted;
+
   return (
     <div className="slingshot-telemetry-bar">
+      {/* Brand */}
       <div className="telemetry-left">
         <span style={{ fontSize: '1.3rem' }}>🚀</span>
-        <span className="telemetry-title">Space Slingshot</span>
-
-        {/* Status Badges */}
-        {gameStatus === 'hit_enemy' && (
-          <div className="status-badge" style={{ background: 'rgba(236, 72, 153, 0.3)', color: '#ec4899', border: '1px solid #ec4899' }}>
-            💥 Enemy Disabled (+150 pts)!
-          </div>
-        )}
-        {gameStatus === 'hit_player' && (
-          <div className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.3)', color: '#ef4444', border: '1px solid #ef4444' }}>
-            💥 Direct Hit! Enemy struck your ship!
-          </div>
-        )}
-        {gameStatus === 'enemy_aiming' && enemyAimInfo && (
-          <div className="status-badge" style={{ background: 'rgba(245, 158, 11, 0.3)', color: '#f59e0b', border: '1px solid #f59e0b' }}>
-            👾 Enemy Interceptor: {enemyAimInfo.archetypeName}
-          </div>
-        )}
-        {enableSolarOrbit && isOrbitPaused && (
-          <div className="status-badge" style={{ background: 'rgba(251, 191, 36, 0.25)', color: '#fbbf24', border: '1px solid #fbbf24' }}>
-            ⏸️ Orbits Frozen (Aiming Mode)
-          </div>
-        )}
+        <span className="telemetry-title hide-on-mobile">Space Slingshot</span>
       </div>
 
-      {/* Center Telemetry Readouts */}
-      <div className="telemetry-stats">
-        <span style={{ color: '#38bdf8' }}>🎯 Target: {targetDist} px</span>
-        <span style={{ color: '#4ade80' }}>⚡ Speed: {currentSpeed} px/s</span>
-        <span style={{ color: '#ec4899' }}>🌌 F_net: {netAccelMag.toFixed(1)}</span>
-        <span style={{ color: '#fbbf24', fontWeight: '800' }}>🏆 Score: {score}</span>
-      </div>
+      {/* Main Aim & Flight Controls (Migrated to Top Bar) */}
+      <div className="telemetry-launch-controls" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Angle Slider */}
+        <div className="control-label" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Compass size={14} color="var(--color-corner-a)" />
+          <span className="hide-on-mobile">θ:</span>
+          <span style={{ color: 'var(--color-corner-a)', fontWeight: '700', minWidth: '32px' }}>{angle}°</span>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            value={angle}
+            disabled={isLaunchDisabled}
+            onChange={(e) => dispatch && dispatch({ type: 'SET_AIM', angle: Number(e.target.value) })}
+            className="launch-slider"
+            style={{ width: '80px', accentColor: 'var(--color-corner-a)' }}
+          />
+        </div>
 
-      {/* Right Controls */}
-      <div className="telemetry-actions">
-        {enableSolarOrbit && (
+        {/* Power Slider */}
+        <div className="control-label" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ color: 'var(--color-corner-c)', fontWeight: '700' }}>⚡</span>
+          <span className="hide-on-mobile">Pwr:</span>
+          <span style={{ color: 'var(--color-corner-c)', fontWeight: '700', minWidth: '28px' }}>{power}</span>
+          <input
+            type="range"
+            min="10"
+            max="200"
+            value={power}
+            disabled={isLaunchDisabled}
+            onChange={(e) => dispatch && dispatch({ type: 'SET_AIM', power: Number(e.target.value) })}
+            className="launch-slider"
+            style={{ width: '80px', accentColor: 'var(--color-corner-c)' }}
+          />
+        </div>
+
+        {/* Action Button */}
+        {handleLaunch && (
           <button
-            className={`btn-icon ${isOrbitPaused ? 'active' : ''}`}
-            onClick={onTogglePauseOrbits}
-            title={isOrbitPaused ? 'Resume live orbital motion' : 'Pause orbital motion to aim smoothly'}
+            className={isSimulating || gameStatus === 'enemy_flying' ? 'btn-primary btn-danger' : 'btn-primary'}
             style={{
-              padding: '6px 10px',
-              fontSize: '0.78rem',
-              background: isOrbitPaused ? 'rgba(251, 191, 36, 0.35)' : 'transparent',
-              borderColor: isOrbitPaused ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)',
-              color: isOrbitPaused ? '#fef08a' : 'inherit',
+              padding: '6px 14px',
+              fontSize: '0.82rem',
+              whiteSpace: 'nowrap',
+              minWidth: '95px',
+              justifyContent: 'center',
+              backgroundColor: (isSimulating || gameStatus === 'enemy_flying') ? '#ef4444' : undefined,
+            }}
+            onClick={() => {
+              if (roundCompleted) onNewLevel();
+              else if (isSimulating || gameStatus === 'enemy_flying') handleStopFlight && handleStopFlight();
+              else handleLaunch();
             }}
           >
-            {isOrbitPaused ? <Play size={15} /> : <Pause size={15} />}
-            <span className="hide-on-mobile">
-              {isOrbitPaused ? 'Resume Orbit' : 'Pause Orbit'}
+            <Play size={14} />
+            <span>
+              {roundCompleted
+                ? 'Next System'
+                : isSimulating || gameStatus === 'enemy_flying'
+                ? 'Stop 🛑'
+                : 'Launch'}
             </span>
           </button>
         )}
+      </div>
 
-        {pastTrails && pastTrails.length > 0 && (
-          <button
-            className={`btn-icon ${showAllPastTrails ? 'active' : ''}`}
-            onClick={onTogglePastTrails}
-            title="Toggle showing all past shot trails"
-            style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-          >
-            {showAllPastTrails ? <Eye size={15} /> : <EyeOff size={15} />}
-            <span className="hide-on-mobile">
-              {showAllPastTrails ? `Past (${pastTrails.length})` : 'Shots'}
-            </span>
-          </button>
-        )}
+      {/* Telemetry Stats Readout */}
+      <div
+        className="telemetry-stats hide-on-mobile"
+        style={{ fontSize: '0.82rem', gap: '12px', fontVariantNumeric: 'tabular-nums' }}
+      >
+        <span style={{ color: '#38bdf8', minWidth: '80px', display: 'inline-block' }}>
+          🎯 {targetDist}px
+        </span>
+        <span style={{ color: '#4ade80', minWidth: '85px', display: 'inline-block' }}>
+          ⚡ {currentSpeed}px/s
+        </span>
+      </div>
 
-        <button
-          className="btn-icon"
-          onClick={onNewLevel}
-          title="Generate Random Planet System"
-          style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-        >
-          <RotateCcw size={15} />
-          <span className="hide-on-mobile">New Orbit</span>
-        </button>
-
+      {/* System Actions: Single Prominent Menu & Settings Button */}
+      <div className="telemetry-actions">
         <button
           className={`btn-config-prominent ${isConfigOpen ? 'active' : ''}`}
           onClick={onToggleConfig}
-          title="Open Universe Config & Customization Menu"
+          title="Open Game Menu & Settings Drawer"
+          style={{ padding: '6px 14px', fontSize: '0.82rem' }}
         >
-          <Sliders size={16} />
-          <span>⚙️ Config</span>
+          <Sliders size={15} />
+          <span>Menu & Settings</span>
         </button>
-
-        {onToggleFullscreen && (
-          <button
-            className="btn-icon"
-            onClick={onToggleFullscreen}
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            style={{ padding: '6px 10px', fontSize: '0.78rem' }}
-          >
-            {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-          </button>
-        )}
       </div>
     </div>
   );

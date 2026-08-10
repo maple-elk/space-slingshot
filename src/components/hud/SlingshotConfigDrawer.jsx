@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sliders, Sparkles, Globe, Eye, Clock, Sun } from 'lucide-react';
+import { X, Sliders, Sparkles, Globe, Eye, EyeOff, Volume2, VolumeX, RotateCcw, Maximize2, Minimize2, Settings } from 'lucide-react';
 
 export function SlingshotConfigDrawer(props) {
   const {
@@ -8,6 +8,13 @@ export function SlingshotConfigDrawer(props) {
     dispatch,
     handleNewLevel,
     onApplyNewConfig,
+    soundEnabled,
+    onToggleSound,
+    pastTrails = [],
+    showAllPastTrails = false,
+    onTogglePastTrails,
+    isFullscreen = false,
+    onToggleFullscreen,
   } = props;
 
   const s = props.state || props;
@@ -24,10 +31,6 @@ export function SlingshotConfigDrawer(props) {
     enableBoosters = false,
     enableShields = false,
     enableEnemyShip = false,
-    enableSolarOrbit = false,
-    launcherVelocityMode = 'stationary',
-    showOrbitRings = true,
-    sunMass = 1200,
     showGravityGradients = false,
     showGravityVectors = false,
     showNetVector = false,
@@ -48,100 +51,72 @@ export function SlingshotConfigDrawer(props) {
         {/* Drawer Header */}
         <div className="drawer-header">
           <div className="drawer-title">
-            <Sliders size={20} color="var(--color-accent-purple)" />
-            <span>Universe Config & Settings</span>
+            <Settings size={20} color="var(--color-accent-purple)" />
+            <span>Game Menu & Settings</span>
           </div>
-          <button className="btn-icon" onClick={onClose} title="Close Config Menu" style={{ padding: '4px 8px' }}>
+          <button className="btn-icon" onClick={onClose} title="Close Menu" style={{ padding: '4px 8px' }}>
             <X size={18} />
           </button>
         </div>
 
         {/* Single Labeled Panel Content (Scrollable) */}
         <div className="drawer-content">
-          {/* SECTION 0: Time Dimension & Orbital Dynamics */}
-          <div className="config-section" style={{ borderLeft: '3px solid #fbbf24', paddingLeft: '12px' }}>
+          {/* SECTION 0: Quick System Actions */}
+          <div className="config-section" style={{ borderLeft: '3px solid #38bdf8', paddingLeft: '12px' }}>
             <div className="section-header">
-              <Clock size={16} color="#fbbf24" />
-              <span style={{ color: '#fbbf24', fontWeight: '800' }}>Time Dimension & Orbital Dynamics</span>
+              <Sliders size={16} color="#38bdf8" />
+              <span style={{ color: '#38bdf8', fontWeight: '800' }}>System Quick Controls</span>
             </div>
 
-            <div className="toggle-grid dense-grid">
-              <label className="toggle-card dense">
-                <input
-                  type="checkbox"
-                  checked={enableSolarOrbit}
-                  onChange={(e) => handleToggleObject('enableSolarOrbit', e.target.checked)}
-                  style={{ accentColor: '#fbbf24' }}
-                />
-                <div>
-                  <div className="toggle-title" style={{ color: '#fbbf24' }}>☀️ Enable Solar Orbit Mode</div>
-                  <div className="toggle-sub">Central Sun with Keplerian orbiting space objects</div>
-                </div>
-              </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+              {onToggleSound && (
+                <button
+                  className={`btn-icon ${soundEnabled ? 'active' : ''}`}
+                  onClick={onToggleSound}
+                  style={{ justifyContent: 'center', padding: '8px 12px', fontSize: '0.82rem' }}
+                >
+                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  <span>{soundEnabled ? 'Audio On' : 'Mute'}</span>
+                </button>
+              )}
 
-              <label className="toggle-card dense">
-                <input
-                  type="checkbox"
-                  checked={showOrbitRings}
-                  onChange={(e) => dispatch({ type: 'SET_SETTING', key: 'showOrbitRings', value: e.target.checked })}
-                  style={{ accentColor: '#38bdf8' }}
-                />
-                <div>
-                  <div className="toggle-title">⭕ Show Visual Orbit Track Rings</div>
-                  <div className="toggle-sub">Faint dashed orbital paths around central Sun</div>
-                </div>
-              </label>
+              <button
+                className={`btn-icon ${showAllPastTrails ? 'active' : ''}`}
+                onClick={onTogglePastTrails}
+                disabled={!pastTrails || pastTrails.length === 0}
+                style={{
+                  justifyContent: 'center',
+                  padding: '8px 12px',
+                  fontSize: '0.82rem',
+                  opacity: pastTrails && pastTrails.length > 0 ? 1 : 0.4,
+                }}
+              >
+                {showAllPastTrails ? <Eye size={16} /> : <EyeOff size={16} />}
+                <span>{showAllPastTrails ? 'Show All' : 'Past Trails'}</span>
+              </button>
+
+              <button
+                className="btn-icon"
+                onClick={() => applyNewConfig && applyNewConfig()}
+                style={{ justifyContent: 'center', padding: '8px 12px', fontSize: '0.82rem' }}
+              >
+                <RotateCcw size={16} />
+                <span>New System</span>
+              </button>
+
+              {onToggleFullscreen && (
+                <button
+                  className="btn-icon"
+                  onClick={onToggleFullscreen}
+                  style={{ justifyContent: 'center', padding: '8px 12px', fontSize: '0.82rem' }}
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                  <span>{isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
+                </button>
+              )}
             </div>
-
-            {enableSolarOrbit && (
-              <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {/* Launcher Velocity Mode Selection */}
-                <div className="slider-group">
-                  <div className="slider-header">
-                    <span>🚀 Launcher Physics Mode</span>
-                    <span style={{ color: '#ec4899', fontWeight: '700' }}>
-                      {launcherVelocityMode === 'stationary' ? 'Stationary Anchor' : 'Orbital Momentum'}
-                    </span>
-                  </div>
-                  <div className="planet-cnt-buttons">
-                    <button
-                      className={`preset-btn ${launcherVelocityMode === 'stationary' ? 'active' : ''}`}
-                      onClick={() => dispatch({ type: 'SET_SETTING', key: 'launcherVelocityMode', value: 'stationary' })}
-                    >
-                      ⚓ Stationary Anchor
-                    </button>
-                    <button
-                      className={`preset-btn ${launcherVelocityMode === 'orbital' ? 'active' : ''}`}
-                      onClick={() => dispatch({ type: 'SET_SETTING', key: 'launcherVelocityMode', value: 'orbital' })}
-                    >
-                      💫 Orbital Velocity Transfer
-                    </button>
-                  </div>
-                </div>
-
-                {/* Central Sun Gravity Pull Mass */}
-                <div className="slider-group">
-                  <div className="slider-header">
-                    <span>Central Sun Mass</span>
-                    <span style={{ color: '#fbbf24', fontWeight: '700' }}>{sunMass}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="400"
-                    max="2400"
-                    step="100"
-                    value={sunMass}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      dispatch({ type: 'SET_SETTING', key: 'sunMass', value: val });
-                      handleNewLevel({ sunMass: val });
-                    }}
-                    style={{ accentColor: '#fbbf24' }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
+
           {/* SECTION 1: Optional Celestial Objects */}
           <div className="config-section">
             <div className="section-header">
