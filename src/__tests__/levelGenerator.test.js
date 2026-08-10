@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateRandomLevel, mulberry32 } from '../utils/physics';
+import { generateRandomLevel, verifyLevelSolvability, mulberry32 } from '../utils/physics';
 
 describe('Level Generator & Seeded PRNG', () => {
   it('mulberry32 PRNG generates deterministic floats in [0, 1)', () => {
@@ -88,4 +88,46 @@ describe('Level Generator & Seeded PRNG', () => {
       expect(dTarget).toBeGreaterThan(p.radius + 30);
     }
   });
+
+  it('produces 360-degree rotational placement variety across multiple seeds', () => {
+    const ships = [];
+    const targets = [];
+
+    for (let seed = 10; seed <= 30; seed += 5) {
+      const level = generateRandomLevel(960, 600, { seed });
+      ships.push(level.ship);
+      targets.push(level.target);
+    }
+
+    // Verify ships are not all pinned to the far left (x < 250)
+    const shipXValues = ships.map((s) => s.x);
+    const hasRightOrCenterShip = shipXValues.some((x) => x > 400);
+    expect(hasRightOrCenterShip).toBe(true);
+
+    // Verify targets are not all pinned to far right (x > 800)
+    const targetXValues = targets.map((t) => t.x);
+    const hasLeftOrCenterTarget = targetXValues.some((x) => x < 550);
+    expect(hasLeftOrCenterTarget).toBe(true);
+
+    // Verify vertical variance (ships placed across different Y quadrants)
+    const shipYValues = ships.map((s) => s.y);
+    const maxY = Math.max(...shipYValues);
+    const minY = Math.min(...shipYValues);
+    expect(maxY - minY).toBeGreaterThan(150);
+  });
+
+  it('verifies that randomly generated levels are reliably solvable', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const level = generateRandomLevel(960, 600, {
+        seed,
+        planetCount: 3,
+        enableBlackHoles: seed % 2 === 0,
+        enableAsteroids: seed % 3 === 0,
+      });
+
+      const isSolvable = verifyLevelSolvability(level);
+      expect(isSolvable).toBe(true);
+    }
+  });
 });
+

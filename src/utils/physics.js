@@ -19,266 +19,377 @@ export function mulberry32(seed) {
   };
 }
 
-// Generate random level layout with planets, target, spaceship, enemy ship, and optional space phenomena
-export function generateRandomLevel(width = 960, height = 600, config = {}) {
-  const seed = config.seed !== undefined ? Number(config.seed) : Math.floor(Math.random() * 2147483647);
-  const rng = mulberry32(seed);
+// Headless level solvability verification helper
+export function verifyLevelSolvability(level, gravityG = DEFAULT_G) {
+  const { ship, target } = level;
+  if (!ship || !target) return true;
 
+  const angles = [];
+  for (let a = 0; a < 360; a += 15) angles.push(a);
+  const powers = [45, 75, 110, 150, 190];
+
+  for (const angleDeg of angles) {
+    for (const power of powers) {
+      let pos = { x: ship.x, y: ship.y };
+      const rad = (angleDeg * Math.PI) / 180;
+      let vel = {
+        x: (power / 4.8) * Math.cos(rad),
+        y: (power / 4.8) * Math.sin(rad),
+      };
+      let warpCooldown = 0;
+      const boostedIds = new Set();
+
+      for (let frame = 1; frame <= 380; frame++) {
+        const physRes = updateProjectilePhysics(
+          pos,
+          vel,
+          level,
+          0.016,
+          gravityG,
+          1.0,
+          warpCooldown,
+          boostedIds
+        );
+        pos = physRes.pos;
+        vel = physRes.vel;
+        warpCooldown = physRes.warpCooldown;
+
+        const collision = checkCollisions(pos, vel, level, 'player');
+        if (collision.type === 'shield_bounce') {
+          vel = collision.reflectedVel;
+          continue;
+        }
+        if (collision.type === 'target') {
+          return true;
+        }
+        if (collision.type !== 'none') {
+          break;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+// Generate random level layout with 360° rotational variety, obstacle occlusion, and guaranteed solvability
+export function generateRandomLevel(width = 960, height = 600, config = {}) {
+  const baseSeed = config.seed !== undefined ? Number(config.seed) : Math.floor(Math.random() * 2147483647);
   const boardScale = config.boardScale ? Number(config.boardScale) : 1.0;
   const sW = width * boardScale;
   const sH = height * boardScale;
+  const gravityG = config.gravityG !== undefined ? Number(config.gravityG) : DEFAULT_G;
 
-  const countSetting = config.planetCount || 'auto';
-  const numPlanets =
-    countSetting === 'auto'
-      ? 2 + Math.floor(rng() * 2)
-      : Math.max(1, Math.min(5, Number(countSetting)));
+  let bestLevel = null;
+  const maxAttempts = 15;
 
-  const massMult = config.massMult ? Number(config.massMult) : 1.0;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const currentSeed = (baseSeed + attempt * 10007) & 0x7fffffff;
+    const rng = mulberry32(currentSeed);
 
-  // Target Station
-  const target = {
-    x: Math.round(sW - 110 * boardScale),
-    y: Math.round(100 * boardScale + rng() * 260 * boardScale),
-    radius: 24,
-  };
+    const countSetting = config.planetCount || 'auto';
+    const numPlanets =
+      countSetting === 'auto'
+        ? 2 + Math.floor(rng() * 2)
+        : Math.max(1, Math.min(5, Number(countSetting)));
 
-  // Space Objects lists
-  const planets = [];
-  const blackHoles = [];
-  const asteroids = [];
-  const wormholes = [];
-  const pulsars = [];
-  const boosters = [];
-  const shields = [];
+    const massMult = config.massMult ? Number(config.massMult) : 1.0;
 
-  const planetColors = [
-    { fill: '#ec4899', glow: 'rgba(236, 72, 153, 0.35)', name: 'Magenta Prime' },
-    { fill: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.35)', name: 'Aetheria' },
-    { fill: '#3b82f6', glow: 'rgba(59, 130, 246, 0.35)', name: 'Neptuna' },
-    { fill: '#f59e0b', glow: 'rgba(245, 158, 11, 0.35)', name: 'Helios Jr' },
-    { fill: '#10b981', glow: 'rgba(16, 185, 129, 0.35)', name: 'Verdant' },
-  ];
+    // Canvas Playable Boundaries (clear of edges & bottom HUD)
+    const marginX = 80 * boardScale;
+    const marginYTop = 80 * boardScale;
+    const marginYBottom = 110 * boardScale;
+    const minX = marginX;
+    const maxX = sW - marginX;
+    const minY = marginYTop;
+    const maxY = sH - marginYBottom;
 
-  const occupiedList = [];
+    const cX = (minX + maxX) / 2;
+    const cY = (minY + maxY) / 2;
+    const rX = (maxX - minX) * 0.42;
+    const rY = (maxY - minY) * 0.42;
 
-  const isPositionOccupied = (x, y, minClearance = 80 * Math.sqrt(boardScale)) => {
-    if (Math.hypot(x - target.x, y - target.y) < minClearance) return true;
-    for (const item of occupiedList) {
-      if (Math.hypot(x - item.x, y - item.y) < minClearance + item.radius) return true;
-    }
-    return false;
-  };
-
-  // 1. Generate Planets
-  for (let i = 0; i < numPlanets; i++) {
-    let px, py, radius, mass;
-    let attempts = 0;
+    // Rule 1: 360° Rotational Placement for Ship & Target
+    let sx, sy, tx, ty;
+    let validPair = false;
+    let pairAttempts = 0;
 
     do {
-      px = (250 + rng() * (width - 460)) * boardScale;
-      py = (90 + rng() * 260) * boardScale;
-      radius = 28 + Math.floor(rng() * 34);
-      mass = Math.round(radius * (1.2 + rng() * 1.5) * massMult);
-      attempts++;
-    } while (isPositionOccupied(px, py, radius + 40 * Math.sqrt(boardScale)) && attempts < 120);
+      pairAttempts++;
+      const theta1 = rng() * Math.PI * 2;
+      const rFactor1 = 0.6 + rng() * 0.38;
+      sx = cX + rX * rFactor1 * Math.cos(theta1);
+      sy = cY + rY * rFactor1 * Math.sin(theta1);
 
-    const theme = planetColors[i % planetColors.length];
-    const planetObj = {
-      id: i + 1,
-      x: Math.round(px),
-      y: Math.round(py),
-      radius,
-      mass,
-      fill: theme.fill,
-      glow: theme.glow,
-      name: theme.name,
-    };
+      // Angle offset theta2 between 100° and 260° relative to theta1
+      const deltaTheta = ((100 + rng() * 160) * Math.PI) / 180;
+      const theta2 = theta1 + (rng() > 0.5 ? deltaTheta : -deltaTheta);
+      const rFactor2 = 0.6 + rng() * 0.38;
+      tx = cX + rX * rFactor2 * Math.cos(theta2);
+      ty = cY + rY * rFactor2 * Math.sin(theta2);
 
-    planets.push(planetObj);
-    occupiedList.push(planetObj);
-  }
+      // Clamp positions to playable arena bounds
+      sx = Math.max(minX, Math.min(maxX, sx));
+      sy = Math.max(minY, Math.min(maxY, sy));
+      tx = Math.max(minX, Math.min(maxX, tx));
+      ty = Math.max(minY, Math.min(maxY, ty));
 
-  // 2. Optional Black Hole
-  if (config.enableBlackHoles) {
-    let bx, by;
-    let attempts = 0;
-    do {
-      bx = (280 + rng() * (width - 500)) * boardScale;
-      by = (100 + rng() * 240) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(bx, by, 110 * Math.sqrt(boardScale)) && attempts < 120);
+      const dist = Math.hypot(tx - sx, ty - sy);
+      if (dist >= 220 * Math.sqrt(boardScale)) {
+        validPair = true;
+      }
+    } while (!validPair && pairAttempts < 50);
 
-    const bh = {
-      id: 'bh_1',
-      x: Math.round(bx),
-      y: Math.round(by),
-      radius: 18,
-      eventRadius: 46,
-      mass: 220 * massMult,
-    };
-    blackHoles.push(bh);
-    occupiedList.push(bh);
-  }
-
-  // 3. Optional Asteroid Cloud / Asteroid Belt
-  if (config.enableAsteroids) {
-    let ax, ay;
-    let attempts = 0;
-    do {
-      ax = (250 + rng() * (width - 450)) * boardScale;
-      ay = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(ax, ay, 90 * Math.sqrt(boardScale)) && attempts < 120);
-
-    const ast = {
-      id: 'ast_1',
-      x: Math.round(ax),
-      y: Math.round(ay),
-      radius: 68,
-      dragFactor: 0.983,
-    };
-    asteroids.push(ast);
-    occupiedList.push(ast);
-  }
-
-  // 4. Optional Wormhole Portals
-  if (config.enableWormholes) {
-    let w1x, w1y, w2x, w2y;
-    let attempts = 0;
-    do {
-      w1x = (220 + rng() * 200) * boardScale;
-      w1y = (90 + rng() * 260) * boardScale;
-      w2x = (width - 360 + rng() * 200) * boardScale;
-      w2y = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (
-      (isPositionOccupied(w1x, w1y, 70 * Math.sqrt(boardScale)) || isPositionOccupied(w2x, w2y, 70 * Math.sqrt(boardScale))) &&
-      attempts < 150
-    );
-
-    const portalA = { id: 'portal_a', x: Math.round(w1x), y: Math.round(w1y), radius: 22, color: '#06b6d4', pairId: 'portal_b' };
-    const portalB = { id: 'portal_b', x: Math.round(w2x), y: Math.round(w2y), radius: 22, color: '#a855f7', pairId: 'portal_a' };
-
-    wormholes.push(portalA, portalB);
-    occupiedList.push(portalA, portalB);
-  }
-
-  // 5. Optional Repulsive Pulsar
-  if (config.enablePulsars) {
-    let rx, ry;
-    let attempts = 0;
-    do {
-      rx = (260 + rng() * (width - 480)) * boardScale;
-      ry = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(rx, ry, 95 * Math.sqrt(boardScale)) && attempts < 120);
-
-    const pulsar = {
-      id: 'pul_1',
-      x: Math.round(rx),
-      y: Math.round(ry),
+    const ship = { x: Math.round(sx), y: Math.round(sy) };
+    const target = {
+      x: Math.round(tx),
+      y: Math.round(ty),
       radius: 24,
-      mass: -140 * massMult,
-      color: '#38bdf8',
     };
-    pulsars.push(pulsar);
-    occupiedList.push(pulsar);
+
+    // Space Objects lists
+    const planets = [];
+    const blackHoles = [];
+    const asteroids = [];
+    const wormholes = [];
+    const pulsars = [];
+    const boosters = [];
+    const shields = [];
+    const occupiedList = [];
+
+    const planetColors = [
+      { fill: '#ec4899', glow: 'rgba(236, 72, 153, 0.35)', name: 'Magenta Prime' },
+      { fill: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.35)', name: 'Aetheria' },
+      { fill: '#3b82f6', glow: 'rgba(59, 130, 246, 0.35)', name: 'Neptuna' },
+      { fill: '#f59e0b', glow: 'rgba(245, 158, 11, 0.35)', name: 'Helios Jr' },
+      { fill: '#10b981', glow: 'rgba(16, 185, 129, 0.35)', name: 'Verdant' },
+    ];
+
+    const isPositionOccupied = (x, y, minClearance = 80 * Math.sqrt(boardScale)) => {
+      if (Math.hypot(x - target.x, y - target.y) < minClearance) return true;
+      if (Math.hypot(x - ship.x, y - ship.y) < minClearance + 10) return true;
+      for (const item of occupiedList) {
+        if (Math.hypot(x - item.x, y - item.y) < minClearance + item.radius) return true;
+      }
+      return false;
+    };
+
+    // Rule 2: Line-of-Sight Occlusion & Gravity Channel Placement for Planets
+    for (let i = 0; i < numPlanets; i++) {
+      let px, py, radius, mass;
+      let attempts = 0;
+
+      do {
+        attempts++;
+        if (i === 0 && attempts < 40) {
+          // Place primary planet near mid-line between ship and target
+          const tLerp = 0.35 + rng() * 0.3;
+          const mx = ship.x + (target.x - ship.x) * tLerp;
+          const my = ship.y + (target.y - ship.y) * tLerp;
+          const normX = -(target.y - ship.y);
+          const normY = target.x - ship.x;
+          const normLen = Math.hypot(normX, normY) || 1;
+          const offsetDist = (rng() > 0.5 ? 1 : -1) * (30 + rng() * 70) * Math.sqrt(boardScale);
+          px = mx + (normX / normLen) * offsetDist;
+          py = my + (normY / normLen) * offsetDist;
+        } else {
+          // Scatter secondary planets across free space
+          px = minX + rng() * (maxX - minX);
+          py = minY + rng() * (maxY - minY);
+        }
+        radius = 28 + Math.floor(rng() * 34);
+        mass = Math.round(radius * (1.2 + rng() * 1.5) * massMult);
+      } while (isPositionOccupied(px, py, radius + 40 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const theme = planetColors[i % planetColors.length];
+      const planetObj = {
+        id: i + 1,
+        x: Math.round(px),
+        y: Math.round(py),
+        radius,
+        mass,
+        fill: theme.fill,
+        glow: theme.glow,
+        name: theme.name,
+      };
+
+      planets.push(planetObj);
+      occupiedList.push(planetObj);
+    }
+
+    // Optional Space Phenomena
+    if (config.enableBlackHoles) {
+      let bx, by;
+      let attempts = 0;
+      do {
+        bx = minX + rng() * (maxX - minX);
+        by = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (isPositionOccupied(bx, by, 100 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const bh = {
+        id: 'bh_1',
+        x: Math.round(bx),
+        y: Math.round(by),
+        radius: 18,
+        eventRadius: 46,
+        mass: 220 * massMult,
+      };
+      blackHoles.push(bh);
+      occupiedList.push(bh);
+    }
+
+    if (config.enableAsteroids) {
+      let ax, ay;
+      let attempts = 0;
+      do {
+        ax = minX + rng() * (maxX - minX);
+        ay = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (isPositionOccupied(ax, ay, 85 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const ast = {
+        id: 'ast_1',
+        x: Math.round(ax),
+        y: Math.round(ay),
+        radius: 68,
+        dragFactor: 0.983,
+      };
+      asteroids.push(ast);
+      occupiedList.push(ast);
+    }
+
+    if (config.enableWormholes) {
+      let w1x, w1y, w2x, w2y;
+      let attempts = 0;
+      do {
+        w1x = minX + rng() * (maxX - minX) * 0.45;
+        w1y = minY + rng() * (maxY - minY);
+        w2x = minX + (maxX - minX) * 0.55 + rng() * (maxX - minX) * 0.45;
+        w2y = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (
+        (isPositionOccupied(w1x, w1y, 65 * Math.sqrt(boardScale)) || isPositionOccupied(w2x, w2y, 65 * Math.sqrt(boardScale))) &&
+        attempts < 150
+      );
+
+      const portalA = { id: 'portal_a', x: Math.round(w1x), y: Math.round(w1y), radius: 22, color: '#06b6d4', pairId: 'portal_b' };
+      const portalB = { id: 'portal_b', x: Math.round(w2x), y: Math.round(w2y), radius: 22, color: '#a855f7', pairId: 'portal_a' };
+
+      wormholes.push(portalA, portalB);
+      occupiedList.push(portalA, portalB);
+    }
+
+    if (config.enablePulsars) {
+      let rx, ry;
+      let attempts = 0;
+      do {
+        rx = minX + rng() * (maxX - minX);
+        ry = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (isPositionOccupied(rx, ry, 90 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const pulsar = {
+        id: 'pul_1',
+        x: Math.round(rx),
+        y: Math.round(ry),
+        radius: 24,
+        mass: -140 * massMult,
+        color: '#38bdf8',
+      };
+      pulsars.push(pulsar);
+      occupiedList.push(pulsar);
+    }
+
+    if (config.enableBoosters) {
+      let gx, gy;
+      let attempts = 0;
+      do {
+        gx = minX + rng() * (maxX - minX);
+        gy = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (isPositionOccupied(gx, gy, 75 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const booster = {
+        id: 'boost_1',
+        x: Math.round(gx),
+        y: Math.round(gy),
+        radius: 26,
+        boostMult: 1.45,
+      };
+      boosters.push(booster);
+      occupiedList.push(booster);
+    }
+
+    if (config.enableShields) {
+      let mx, my;
+      let attempts = 0;
+      do {
+        mx = minX + rng() * (maxX - minX);
+        my = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (isPositionOccupied(mx, my, 80 * Math.sqrt(boardScale)) && attempts < 120);
+
+      const shieldObj = {
+        id: 'shield_1',
+        x: Math.round(mx),
+        y: Math.round(my),
+        radius: 20,
+        shieldRadius: 40,
+        mass: 40 * massMult,
+      };
+      shields.push(shieldObj);
+      occupiedList.push(shieldObj);
+    }
+
+    let enemyShip = null;
+    if (config.enableEnemyShip) {
+      let ex, ey;
+      let attempts = 0;
+      do {
+        ex = minX + rng() * (maxX - minX);
+        ey = minY + rng() * (maxY - minY);
+        attempts++;
+      } while (
+        (isPositionOccupied(ex, ey, 80 * Math.sqrt(boardScale)) || Math.hypot(ex - ship.x, ey - ship.y) < 160 * Math.sqrt(boardScale)) &&
+        attempts < 120
+      );
+
+      const enemyObj = {
+        id: 'enemy_1',
+        x: Math.round(ex),
+        y: Math.round(ey),
+        radius: 20,
+        status: 'active',
+        name: 'Enemy Interceptor',
+      };
+      enemyShip = enemyObj;
+      occupiedList.push(enemyObj);
+    }
+
+    const candidateLevel = {
+      seed: baseSeed,
+      ship,
+      target,
+      planets,
+      blackHoles,
+      asteroids,
+      wormholes,
+      pulsars,
+      boosters,
+      shields,
+      enemyShip,
+    };
+
+    if (!bestLevel) bestLevel = candidateLevel;
+
+    // Rule 5: Solvability Verification Pass
+    if (verifyLevelSolvability(candidateLevel, gravityG)) {
+      return candidateLevel;
+    }
   }
 
-  // 6. Optional Speed Booster Gate
-  if (config.enableBoosters) {
-    let gx, gy;
-    let attempts = 0;
-    do {
-      gx = (240 + rng() * (width - 450)) * boardScale;
-      gy = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(gx, gy, 80 * Math.sqrt(boardScale)) && attempts < 120);
-
-    const booster = {
-      id: 'boost_1',
-      x: Math.round(gx),
-      y: Math.round(gy),
-      radius: 26,
-      boostMult: 1.45,
-    };
-    boosters.push(booster);
-    occupiedList.push(booster);
-  }
-
-  // 7. Optional Elastic Shield Moon
-  if (config.enableShields) {
-    let mx, my;
-    let attempts = 0;
-    do {
-      mx = (260 + rng() * (width - 460)) * boardScale;
-      my = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(mx, my, 85 * Math.sqrt(boardScale)) && attempts < 120);
-
-    const shieldObj = {
-      id: 'shield_1',
-      x: Math.round(mx),
-      y: Math.round(my),
-      radius: 20,
-      shieldRadius: 40,
-      mass: 40 * massMult,
-    };
-    shields.push(shieldObj);
-    occupiedList.push(shieldObj);
-  }
-
-  // 8. Optional Hostile Enemy Spaceship
-  let enemyShip = null;
-  if (config.enableEnemyShip) {
-    let ex, ey;
-    let attempts = 0;
-    do {
-      ex = (width - 260 + rng() * 140) * boardScale;
-      ey = (90 + rng() * 260) * boardScale;
-      attempts++;
-    } while (isPositionOccupied(ex, ey, 90 * Math.sqrt(boardScale)) && attempts < 120);
-
-    const enemyObj = {
-      id: 'enemy_1',
-      x: Math.round(ex),
-      y: Math.round(ey),
-      radius: 20,
-      status: 'active',
-      name: 'Enemy Interceptor',
-    };
-    enemyShip = enemyObj;
-    occupiedList.push(enemyObj);
-  }
-
-  // Generate random player spaceship position (well clear of bottom HUD)
-  let sx, sy, shipOverlap;
-  let shipAttempts = 0;
-  do {
-    shipOverlap = false;
-    sx = (140 + rng() * 120) * boardScale;
-    sy = (100 + rng() * 250) * boardScale;
-
-    if (isPositionOccupied(sx, sy, 80 * Math.sqrt(boardScale))) shipOverlap = true;
-    shipAttempts++;
-  } while (shipOverlap && shipAttempts < 150);
-
-  const ship = { x: Math.round(sx), y: Math.round(sy) };
-
-  return {
-    seed,
-    ship,
-    target,
-    planets,
-    blackHoles,
-    asteroids,
-    wormholes,
-    pulsars,
-    boosters,
-    shields,
-    enemyShip,
-  };
+  return bestLevel;
 }
 
 // 3-Archetype Enemy AI Aiming Trajectory Generator
