@@ -37,13 +37,28 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
   const gravityG = config.gravityG !== undefined ? Number(config.gravityG) : DEFAULT_G;
   const requestedTier = config.difficultyTier || 'auto';
 
-  // Check for pre-mined Golden Seed Presets if not bypassing
-  if (!config.bypassPresets && requestedTier && requestedTier !== 'auto') {
+  // Determine explicit pathway mode: 'random' | 'preset' | 'runtime_scored'
+  let mode = config.generationMode;
+  if (!mode) {
+    if (config.presetSeed !== undefined || config.usePreset) {
+      mode = 'preset';
+    } else if (config.bypassPresets) {
+      mode = requestedTier && requestedTier !== 'auto' ? 'runtime_scored' : 'random';
+    } else if (requestedTier && requestedTier !== 'auto') {
+      mode = 'preset';
+    } else {
+      mode = 'random';
+    }
+  }
+
+  // Pathway 2: Pre-mined Golden Seed Presets
+  if (mode === 'preset') {
     const preset = getGoldenPreset(requestedTier, baseSeed);
     if (preset) {
       const level = JSON.parse(JSON.stringify(preset));
       level.gravityG = gravityG;
       level.seed = baseSeed;
+      level.generationMode = 'preset';
 
       if (config.enableEnemyShip === false) {
         level.enemyShip = null;
@@ -58,6 +73,8 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       }
       return level;
     }
+    // If no preset available for requested tier, fall back to runtime scoring
+    mode = 'runtime_scored';
   }
   const budgetMap = {
     easy: 15,
@@ -65,11 +82,12 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     hard: 60,
     extreme: 150,
     nightmare: 300,
+    singularity: 400,
     auto: 15,
   };
   const maxAttempts = budgetMap[requestedTier] || 15;
 
-  const TIER_RANKS = { easy: 1, medium: 2, hard: 3, extreme: 4, nightmare: 5, unrated: 99 };
+  const TIER_RANKS = { easy: 1, medium: 2, hard: 3, extreme: 4, nightmare: 5, singularity: 6, unrated: 99 };
   const targetRank = TIER_RANKS[requestedTier] || 0;
 
   let bestLevel = null;
@@ -79,7 +97,7 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     const currentSeed = (baseSeed + attempt * 10007) & 0x7fffffff;
     const rng = mulberry32(currentSeed);
 
-    const isExtremeOrNightmare = requestedTier === 'extreme' || requestedTier === 'nightmare';
+    const isExtremeOrNightmare = requestedTier === 'extreme' || requestedTier === 'nightmare' || requestedTier === 'singularity';
     const isWildMix = config.wildMix || config.bypassPresets;
 
     const countSetting = config.planetCount || 'auto';
@@ -394,6 +412,7 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       shields,
       enemyShip,
     };
+    candidateLevel.generationMode = mode;
 
     // Rule 5: Solvability & Difficulty Verification Pass
     const isSolvableCoarse = verifyLevelSolvability(candidateLevel, gravityG);
@@ -401,6 +420,12 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       const difficultyRating = evaluateMapDifficulty(candidateLevel, { gravityG });
       candidateLevel.difficultyRating = difficultyRating;
 
+      // Pathway 1: Pure Random (return first valid solvable map)
+      if (mode === 'random' || requestedTier === 'auto') {
+        return candidateLevel;
+      }
+
+      // Pathway 3: Runtime Scored (target tier match)
       if (difficultyRating.tier !== 'unrated') {
         if (!bestLevel) {
           bestLevel = candidateLevel;
@@ -415,20 +440,22 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
           }
         }
 
-        if (requestedTier === 'auto') {
-          return candidateLevel;
-        } else if (difficultyRating.tier === requestedTier) {
+        if (difficultyRating.tier === requestedTier) {
           return candidateLevel;
         }
       }
     }
   }
 
-  if (bestLevel && !bestLevel.difficultyRating) {
-    bestLevel.difficultyRating = evaluateMapDifficulty(bestLevel, { gravityG });
+  if (bestLevel) {
+    if (!bestLevel.difficultyRating) {
+      bestLevel.difficultyRating = evaluateMapDifficulty(bestLevel, { gravityG });
+    }
+    bestLevel.generationMode = mode;
+    return bestLevel;
   }
 
-  return bestLevel;
+  return null;
 }
 
 // 3-Archetype Enemy AI Aiming Trajectory Generator

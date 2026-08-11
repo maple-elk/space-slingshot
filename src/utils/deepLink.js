@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS = {
   enableShields: false,
   enableEnemyShip: false,
   showGravityGradients: true,
-  showGravityVectors: true,
+  showGravityVectors: false,
   showNetVector: false,
 };
 
@@ -51,6 +51,12 @@ export function parseDeepLinkQuery(searchString) {
 
   const params = new URLSearchParams(query);
   const parsed = {};
+
+  // Generation Mode ('random' | 'preset' | 'runtime_scored')
+  const modeParam = params.get('mode');
+  if (modeParam && ['random', 'preset', 'runtime_scored'].includes(modeParam.toLowerCase())) {
+    parsed.mapGenerationMode = modeParam.toLowerCase();
+  }
 
   // Tier
   const tierParam = params.get('tier');
@@ -153,6 +159,9 @@ export function parseDeepLinkQuery(searchString) {
 export function buildDeepLinkUrl(state = {}, levelSeed = null, isConfigOpen = false, baseUrl = null) {
   const params = new URLSearchParams();
 
+  const mode = state.mapGenerationMode || state.level?.generationMode;
+  if (mode && mode !== 'random') params.set('mode', mode);
+
   const tier = state.difficultyTier || 'auto';
   if (tier !== 'auto') params.set('tier', tier);
 
@@ -202,7 +211,7 @@ export function buildDeepLinkUrl(state = {}, levelSeed = null, isConfigOpen = fa
   if (state.enableShields === true) params.set('shield', '1');
   else if (state.enableShields === false) params.set('shield', '0');
 
-  if (state.showGravityVectors === false) params.set('vectors', '0');
+  if (state.showGravityVectors === true) params.set('vectors', '1');
   if (state.showGravityGradients === false) params.set('gradients', '0');
   if (state.showNetVector === true) params.set('net', '1');
 

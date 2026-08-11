@@ -14,7 +14,7 @@ describe('Full App Rendering', () => {
   it('renders SpaceSlingshot component to string without crashing or rendering NaN metrics', () => {
     const html = renderToString(<SpaceSlingshot soundEnabled={true} onToggleSound={() => {}} isFullscreen={false} onToggleFullscreen={() => {}} />);
     expect(html).toContain('slingshot-telemetry-bar');
-    expect(html).toContain('telemetry-launch-controls');
+    expect(html).toContain('telemetry-stats');
     expect(html).toContain('Fullscreen');
     expect(html).not.toContain('NaN');
   });

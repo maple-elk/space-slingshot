@@ -5,6 +5,7 @@ export function createInitialGameState(searchString) {
   const { parsedSettings, seed } = parseDeepLinkQuery(searchString);
 
   const baseSettings = {
+    mapGenerationMode: parsedSettings.mapGenerationMode || 'random',
     difficultyTier: 'auto',
     planetCount: 'auto',
     gravityG: DEFAULT_G,
@@ -19,13 +20,14 @@ export function createInitialGameState(searchString) {
     enableShields: false,
     enableEnemyShip: false,
     showGravityGradients: true,
-    showGravityVectors: true,
+    showGravityVectors: false,
     showNetVector: false,
     showSettingsOverlay: false,
     ...parsedSettings,
   };
 
   const levelConfig = {
+    generationMode: baseSettings.mapGenerationMode,
     difficultyTier: baseSettings.difficultyTier,
     planetCount: baseSettings.planetCount,
     gravityG: baseSettings.gravityG,
@@ -41,9 +43,18 @@ export function createInitialGameState(searchString) {
     seed: seed,
   };
 
+  const initialLevel = generateRandomLevel(960, 600, levelConfig);
+
   return {
     ...baseSettings,
-    level: generateRandomLevel(960, 600, levelConfig),
+    level: initialLevel,
+    enableBlackHoles: parsedSettings.enableBlackHoles !== undefined ? parsedSettings.enableBlackHoles : Boolean(initialLevel?.blackHoles && initialLevel.blackHoles.length > 0),
+    enableAsteroids: parsedSettings.enableAsteroids !== undefined ? parsedSettings.enableAsteroids : Boolean(initialLevel?.asteroids && initialLevel.asteroids.length > 0),
+    enableWormholes: parsedSettings.enableWormholes !== undefined ? parsedSettings.enableWormholes : Boolean(initialLevel?.wormholes && initialLevel.wormholes.length > 0),
+    enablePulsars: parsedSettings.enablePulsars !== undefined ? parsedSettings.enablePulsars : Boolean(initialLevel?.pulsars && initialLevel.pulsars.length > 0),
+    enableBoosters: parsedSettings.enableBoosters !== undefined ? parsedSettings.enableBoosters : Boolean(initialLevel?.boosters && initialLevel.boosters.length > 0),
+    enableShields: parsedSettings.enableShields !== undefined ? parsedSettings.enableShields : Boolean(initialLevel?.shields && initialLevel.shields.length > 0),
+    enableEnemyShip: parsedSettings.enableEnemyShip !== undefined ? parsedSettings.enableEnemyShip : Boolean(initialLevel?.enemyShip && initialLevel.enemyShip.status === 'active'),
     angle: 335,
     power: 55,
     isDraggingAim: false,
@@ -187,7 +198,8 @@ export function gameReducer(state, action) {
         showEndSummary: action.status === 'hit_player',
       };
 
-    case 'RESET_LEVEL':
+    case 'RESET_LEVEL': {
+      const lvl = action.newLevel;
       return {
         ...state,
         gameStatus: 'idle',
@@ -202,9 +214,17 @@ export function gameReducer(state, action) {
         enemyTrail: [],
         roundCompleted: false,
         showEndSummary: false,
-        level: action.newLevel,
+        level: lvl,
+        enableBlackHoles: Boolean(lvl?.blackHoles && lvl.blackHoles.length > 0),
+        enableAsteroids: Boolean(lvl?.asteroids && lvl.asteroids.length > 0),
+        enableWormholes: Boolean(lvl?.wormholes && lvl.wormholes.length > 0),
+        enablePulsars: Boolean(lvl?.pulsars && lvl.pulsars.length > 0),
+        enableBoosters: Boolean(lvl?.boosters && lvl.boosters.length > 0),
+        enableShields: Boolean(lvl?.shields && lvl.shields.length > 0),
+        enableEnemyShip: Boolean(lvl?.enemyShip && lvl.enemyShip.status === 'active'),
         elapsedTime: 0,
       };
+    }
 
     case 'TOGGLE_PAST_TRAILS':
       return { ...state, showAllPastTrails: !state.showAllPastTrails };

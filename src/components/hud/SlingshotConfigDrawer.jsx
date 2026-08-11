@@ -24,6 +24,7 @@ export function SlingshotConfigDrawer(props) {
   const s = props.state || props;
 
   const {
+    level,
     difficultyTier = 'auto',
     planetCount,
     gravityG = 300,
@@ -39,8 +40,9 @@ export function SlingshotConfigDrawer(props) {
     showGravityGradients = false,
     showGravityVectors = false,
     showNetVector = false,
-    level,
   } = s;
+
+  const mapGenerationMode = s.mapGenerationMode || level?.generationMode || 'random';
 
   if (!isOpen) return null;
 
@@ -147,144 +149,227 @@ export function SlingshotConfigDrawer(props) {
             </div>
           </div>
 
-          {/* SECTION 0.5: Difficulty Tier & Complexity Rating */}
+          {/* SECTION 0.5: 3 Map Generation Pathways (Disambiguated UI) */}
           <div className="config-section" style={{ borderLeft: '3px solid #a855f7', paddingLeft: '12px' }}>
-            <div className="section-header">
+            <div className="section-header" style={{ marginBottom: '8px' }}>
               <Sparkles size={16} color="#a855f7" />
-              <span style={{ color: '#a855f7', fontWeight: '800' }}>Difficulty & Map Complexity</span>
+              <span style={{ color: '#a855f7', fontWeight: '800' }}>Map Generation Pathways</span>
             </div>
 
-            {/* Compact Smooth Difficulty Range Slider */}
-            <div style={{ marginTop: '10px', background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
-              {(() => {
-                const TIER_ORDER = [
-                  { id: 'auto', label: '🎲 Random (Procedural)', color: '#38bdf8' },
-                  { id: 'easy', label: '🟢 Easy (Level 2)', color: '#4ade80' },
-                  { id: 'medium', label: '🟡 Medium (Level 3)', color: '#f59e0b' },
-                  { id: 'hard', label: '🔴 Hard (Level 4)', color: '#f43f5e' },
-                  { id: 'nightmare', label: '☠️ Nightmare (Level 4)', color: '#ef4444' },
-                  { id: 'singularity', label: '🌀 Singularity (Level 5)', color: '#c084fc' },
-                ];
-                const activeIdx = Math.max(0, TIER_ORDER.findIndex((t) => t.id === difficultyTier));
-                const currentTierObj = TIER_ORDER[activeIdx] || TIER_ORDER[0];
-
+            {/* 3-Way Mode Switcher Tabs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px', marginBottom: '10px' }}>
+              {[
+                { id: 'random', label: '🎲 Pure Random', color: '#38bdf8' },
+                { id: 'runtime_scored', label: '🎯 Target Scored', color: '#f59e0b' },
+                { id: 'preset', label: '🏆 Golden Catalog', color: '#c084fc' },
+              ].map((pathway) => {
+                const isActive = (mapGenerationMode || 'random') === pathway.id;
                 return (
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.8rem' }}>
-                      <span style={{ opacity: 0.8 }}>Target Tier:</span>
-                      <span style={{ fontWeight: '800', color: currentTierObj.color }}>
-                        {currentTierObj.label}
-                      </span>
-                    </div>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="5"
-                      step="1"
-                      value={activeIdx}
-                      onChange={(e) => {
-                        const newTierObj = TIER_ORDER[Number(e.target.value)];
-                        if (newTierObj) {
-                          dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: newTierObj.id });
-                          if (applyNewConfig) applyNewConfig({ difficultyTier: newTierObj.id });
-                        }
-                      }}
-                      style={{ width: '100%', accentColor: currentTierObj.color, cursor: 'pointer' }}
-                    />
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', opacity: 0.6, marginTop: '4px' }}>
-                      <span>Random</span>
-                      <span>Easy</span>
-                      <span>Med</span>
-                      <span>Hard</span>
-                      <span>Nightmare</span>
-                      <span>Singularity</span>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Curated Golden Seed Presets Browser Sub-Panel */}
-            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px rgba(255, 255, 255, 0.1) solid' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#a855f7', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Compass size={14} color="#a855f7" />
-                <span>Golden Presets Catalog (161 Mined Maps)</span>
-              </div>
-
-              {/* Tier selector for presets browser in compact 2x2 grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '6px' }}>
-                {[
-                  { id: 'level2', label: 'Standard (50)' },
-                  { id: 'level3', label: 'Hard (50)' },
-                  { id: 'level4', label: 'Nightmare (50)' },
-                  { id: 'level5', label: '🌀 Singularity (11)' },
-                ].map((pt) => (
                   <button
-                    key={pt.id}
-                    className={`preset-btn ${selectedPresetTier === pt.id ? 'active' : ''}`}
-                    style={{ padding: '4px 6px', fontSize: '0.7rem', width: '100%' }}
-                    onClick={() => setSelectedPresetTier(pt.id)}
+                    key={pathway.id}
+                    className={`preset-btn ${isActive ? 'active' : ''}`}
+                    style={{
+                      padding: '6px 4px',
+                      fontSize: '0.72rem',
+                      fontWeight: isActive ? '800' : '600',
+                      background: isActive ? `${pathway.color}25` : 'rgba(255,255,255,0.03)',
+                      borderColor: isActive ? pathway.color : 'rgba(255,255,255,0.1)',
+                      color: isActive ? pathway.color : '#cbd5e1',
+                    }}
+                    onClick={() => {
+                      dispatch({ type: 'SET_SETTING', key: 'mapGenerationMode', value: pathway.id });
+                    }}
                   >
-                    {pt.label}
+                    {pathway.label}
                   </button>
-                ))}
-              </div>
-
-              {/* Grid of preset map cards */}
-              <div
-                style={{
-                  maxHeight: '140px',
-                  overflowY: 'auto',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-                  gap: '6px',
-                  paddingRight: '4px',
-                }}
-              >
-                {(getAllGoldenPresets()[selectedPresetTier] || []).map((p, idx) => {
-                  const rating = p.difficultyRating || {};
-                  const isSelected = level?.seed === p.seed;
-
-                  return (
-                    <div
-                      key={p.seed || idx}
-                      onClick={() => {
-                        dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: rating.tier || selectedPresetTier });
-                        if (applyNewConfig) {
-                          applyNewConfig({
-                            difficultyTier: rating.tier || selectedPresetTier,
-                            seed: p.seed,
-                            bypassPresets: false,
-                          });
-                        }
-                      }}
-                      style={{
-                        padding: '6px',
-                        borderRadius: '6px',
-                        background: isSelected ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.05)',
-                        border: isSelected ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
-                        cursor: 'pointer',
-                        fontSize: '0.72rem',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontWeight: '700', color: isSelected ? '#a855f7' : '#e2e8f0' }}>
-                        Seed #{p.seed}
-                      </div>
-                      <div style={{ opacity: 0.85, fontSize: '0.68rem', marginTop: '2px' }}>
-                        Score: {rating.compositeScore || 'N/A'}
-                      </div>
-                      <div style={{ opacity: 0.7, fontSize: '0.66rem' }}>
-                        Turn: {Math.round(rating.minTurnDeg || 0)}° | Win: {rating.maxSolutionWindowDeg || 0.1}°
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
 
+            {/* PATHWAY 1: Pure Random Mode */}
+            {(mapGenerationMode === 'random' || !mapGenerationMode) && (
+              <div style={{ background: 'rgba(56, 189, 248, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#38bdf8', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🎲 Pure Random (Procedural Sandbox)</span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#cbd5e1', lineHeight: '1.4', marginBottom: '10px' }}>
+                  Generates an unconstrained orbital flight path immediately. Solvability is verified and dynamic difficulty rating is scored after creation.
+                </div>
+                <button
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => {
+                    dispatch({ type: 'SET_SETTING', key: 'mapGenerationMode', value: 'random' });
+                    dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: 'auto' });
+                    if (applyNewConfig) applyNewConfig({ generationMode: 'random', difficultyTier: 'auto' });
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>Generate Pure Random Map</span>
+                </button>
+              </div>
+            )}
+
+            {/* PATHWAY 3: Target Difficulty Scored (Runtime AI Mining) */}
+            {mapGenerationMode === 'runtime_scored' && (
+              <div style={{ background: 'rgba(245, 158, 11, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#f59e0b', marginBottom: '4px' }}>
+                  🎯 Target Difficulty (Real-Time AI Solver Mining)
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#cbd5e1', lineHeight: '1.4', marginBottom: '8px' }}>
+                  Mines candidate seeds and executes AI solver evaluation in real-time until a fresh map matching your exact target tier is generated.
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', marginBottom: '10px' }}>
+                  {[
+                    { id: 'easy', label: '🟢 Easy', color: '#4ade80' },
+                    { id: 'medium', label: '🟡 Med', color: '#f59e0b' },
+                    { id: 'hard', label: '🔴 Hard', color: '#f43f5e' },
+                    { id: 'nightmare', label: '☠️ Night', color: '#ef4444' },
+                    { id: 'singularity', label: '🌀 Sing', color: '#c084fc' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      className={`preset-btn ${difficultyTier === t.id ? 'active' : ''}`}
+                      style={{
+                        padding: '5px 2px',
+                        fontSize: '0.68rem',
+                        fontWeight: difficultyTier === t.id ? '800' : '600',
+                        borderColor: difficultyTier === t.id ? t.color : 'rgba(255,255,255,0.1)',
+                        color: difficultyTier === t.id ? t.color : '#cbd5e1',
+                      }}
+                      onClick={() => dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: t.id })}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: 'linear-gradient(135deg, #d97706, #f59e0b)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: '700',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => {
+                    const targetT = difficultyTier === 'auto' ? 'medium' : difficultyTier;
+                    if (applyNewConfig) applyNewConfig({ generationMode: 'runtime_scored', difficultyTier: targetT });
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>Mine & Score {difficultyTier.toUpperCase()} Map</span>
+                </button>
+              </div>
+            )}
+
+            {/* PATHWAY 2: Preset Golden Catalog */}
+            {mapGenerationMode === 'preset' && (
+              <div style={{ background: 'rgba(168, 85, 247, 0.05)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#a855f7', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Compass size={14} color="#a855f7" />
+                  <span>Golden Presets Catalog (161 Mined Maps)</span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: '#cbd5e1', lineHeight: '1.4', marginBottom: '8px' }}>
+                  Loads a verified, pre-mined golden seed level instantly with 0ms solver wait time.
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '6px' }}>
+                  {[
+                    { id: 'level2', label: 'Standard (50)' },
+                    { id: 'level3', label: 'Hard (50)' },
+                    { id: 'level4', label: 'Nightmare (50)' },
+                    { id: 'level5', label: '🌀 Singularity (11)' },
+                  ].map((pt) => (
+                    <button
+                      key={pt.id}
+                      className={`preset-btn ${selectedPresetTier === pt.id ? 'active' : ''}`}
+                      style={{ padding: '4px 6px', fontSize: '0.7rem', width: '100%' }}
+                      onClick={() => setSelectedPresetTier(pt.id)}
+                    >
+                      {pt.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div
+                  style={{
+                    maxHeight: '140px',
+                    overflowY: 'auto',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                    gap: '6px',
+                    paddingRight: '4px',
+                  }}
+                >
+                  {(getAllGoldenPresets()[selectedPresetTier] || []).map((p, idx) => {
+                    const rating = p.difficultyRating || {};
+                    const isSelected = level?.seed === p.seed;
+
+                    return (
+                      <div
+                        key={p.seed || idx}
+                        onClick={() => {
+                          dispatch({ type: 'SET_SETTING', key: 'mapGenerationMode', value: 'preset' });
+                          dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: rating.tier || selectedPresetTier });
+                          if (applyNewConfig) {
+                            applyNewConfig({
+                              generationMode: 'preset',
+                              difficultyTier: rating.tier || selectedPresetTier,
+                              seed: p.seed,
+                              usePreset: true,
+                            });
+                          }
+                        }}
+                        style={{
+                          padding: '6px',
+                          borderRadius: '6px',
+                          background: isSelected ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.05)',
+                          border: isSelected ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
+                          cursor: 'pointer',
+                          fontSize: '0.72rem',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <div style={{ fontWeight: '700', color: isSelected ? '#a855f7' : '#e2e8f0' }}>
+                          Seed #{p.seed}
+                        </div>
+                        <div style={{ opacity: 0.85, fontSize: '0.68rem', marginTop: '2px' }}>
+                          Score: {rating.compositeScore || 'N/A'}
+                        </div>
+                        <div style={{ opacity: 0.7, fontSize: '0.66rem' }}>
+                          Turn: {Math.round(rating.minTurnDeg || 0)}° | Win: {rating.maxSolutionWindowDeg || 0.1}°
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Active Level Difficulty Metric Summary Card */}
             {level?.difficultyRating && (
               <div
                 style={{
@@ -301,7 +386,7 @@ export function SlingshotConfigDrawer(props) {
               >
                 <div style={{ fontWeight: '700', display: 'flex', justifyContent: 'space-between' }}>
                   <span>
-                    {level.difficultyRating.tierEmoji} {level.difficultyRating.tierLabel} Tier
+                    {level.difficultyRating.tierEmoji} {level.difficultyRating.tierLabel} Tier ({level.generationMode || 'random'})
                   </span>
                   <span style={{ color: level.difficultyRating.solvable ? '#4ade80' : '#ef4444' }}>
                     {level.difficultyRating.solvable ? '✓ Solvable' : '⚠ Unsolvable'}

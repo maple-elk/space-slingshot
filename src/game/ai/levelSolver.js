@@ -7,6 +7,7 @@ export const DIFFICULTY_TIERS = {
   hard: { key: 'hard', label: 'Hard', emoji: '🔴' },
   extreme: { key: 'extreme', label: 'Extreme', emoji: '⚡' },
   nightmare: { key: 'nightmare', label: 'Nightmare', emoji: '☠️' },
+  singularity: { key: 'singularity', label: 'Singularity', emoji: '🌀' },
   unrated: { key: 'unrated', label: 'Unrated', emoji: '❓' },
 };
 
@@ -126,9 +127,11 @@ export function evaluateMapDifficulty(level, options = {}) {
   let tier = 'easy';
   if (solutionCount > 0 && hasDirectShot && minTurnDeg < 30 && (level.planets || []).length === 0) {
     tier = 'easy';
-  } else if (solutionCount > 0 && (minTurnDeg > 540 || windowDensity < 0.05)) {
+  } else if (solutionCount > 0 && (minTurnDeg > 540 || (maxLoops >= 2 && windowDensity < 0.05))) {
+    tier = 'singularity';
+  } else if (solutionCount > 0 && (minTurnDeg > 360 || windowDensity < 0.05)) {
     tier = 'nightmare';
-  } else if (solutionCount > 0 && (minTurnDeg > 360 || windowDensity < 0.2)) {
+  } else if (solutionCount > 0 && (minTurnDeg > 270 || windowDensity < 0.2)) {
     tier = 'extreme';
   } else if (solutionCount > 0 && (minTurnDeg > 180 || windowDensity < 1.0)) {
     tier = 'hard';

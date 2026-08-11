@@ -46,6 +46,7 @@ export default function SpaceSlingshot({
     boardScale,
     gravityG,
     difficultyTier,
+    mapGenerationMode,
     planetCount,
     massMult,
     enableBlackHoles,
@@ -92,6 +93,7 @@ export default function SpaceSlingshot({
       setTimeout(() => {
         const bScale = customConfig?.boardScale !== undefined ? customConfig.boardScale : boardScale;
         const cfg = {
+          generationMode: customConfig?.generationMode || mapGenerationMode,
           planetCount,
           massMult,
           boardScale: bScale,
@@ -254,6 +256,7 @@ export default function SpaceSlingshot({
         dispatch={dispatch}
         handleLaunch={handleLaunch}
         handleStopFlight={handleStopFlight}
+        level={level}
       />
 
       {/* Main Game Stage Area */}

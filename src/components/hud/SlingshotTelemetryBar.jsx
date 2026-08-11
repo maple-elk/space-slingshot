@@ -27,6 +27,7 @@ export function SlingshotTelemetryBar({
   dispatch,
   handleLaunch,
   handleStopFlight,
+  level,
 }) {
   const isLaunchDisabled = isSimulating || turnOwner !== 'player' || roundCompleted;
 
@@ -38,83 +39,74 @@ export function SlingshotTelemetryBar({
         <span className="telemetry-title hide-on-mobile">Space Slingshot</span>
       </div>
 
-      {/* Main Aim & Flight Controls (Migrated to Top Bar) */}
-      <div className="telemetry-launch-controls" style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        {/* Angle Slider */}
-        <div className="control-label" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Compass size={14} color="var(--color-corner-a)" />
-          <span className="hide-on-mobile">θ:</span>
-          <span style={{ color: 'var(--color-corner-a)', fontWeight: '700', minWidth: '32px' }}>{angle}°</span>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            value={angle}
-            disabled={isLaunchDisabled}
-            onChange={(e) => dispatch && dispatch({ type: 'SET_AIM', angle: Number(e.target.value) })}
-            className="launch-slider"
-            style={{ width: '80px', accentColor: 'var(--color-corner-a)' }}
-          />
-        </div>
 
-        {/* Power Slider */}
-        <div className="control-label" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ color: 'var(--color-corner-c)', fontWeight: '700' }}>⚡</span>
-          <span className="hide-on-mobile">Pwr:</span>
-          <span style={{ color: 'var(--color-corner-c)', fontWeight: '700', minWidth: '28px' }}>{power}</span>
-          <input
-            type="range"
-            min="10"
-            max="60"
-            value={power}
-            disabled={isLaunchDisabled}
-            onChange={(e) => dispatch && dispatch({ type: 'SET_AIM', power: Number(e.target.value) })}
-            className="launch-slider"
-            style={{ width: '80px', accentColor: 'var(--color-corner-c)' }}
-          />
-        </div>
 
-        {/* Action Button */}
-        {handleLaunch && (
-          <button
-            className={isSimulating || gameStatus === 'enemy_flying' ? 'btn-primary btn-danger' : 'btn-primary'}
+      {/* Map Difficulty & Source Metadata Badge */}
+      <div className="telemetry-stats" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {level?.difficultyRating && (
+          <div
+            onClick={onToggleConfig}
+            className="btn-icon"
+            title={`Click to open Map & Difficulty Settings. Seed #${level.seed || 'N/A'}`}
             style={{
-              padding: '6px 14px',
-              fontSize: '0.82rem',
-              whiteSpace: 'nowrap',
-              minWidth: '95px',
-              justifyContent: 'center',
-              backgroundColor: (isSimulating || gameStatus === 'enemy_flying') ? '#ef4444' : undefined,
-            }}
-            onClick={() => {
-              if (roundCompleted) onNewLevel();
-              else if (isSimulating || gameStatus === 'enemy_flying') handleStopFlight && handleStopFlight();
-              else handleLaunch();
+              padding: '4px 12px',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid rgba(168, 85, 247, 0.4)',
+              color: '#e9d5ff',
+              borderRadius: '16px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
             }}
           >
-            <Play size={14} />
-            <span>
-              {roundCompleted
-                ? 'Next System'
-                : isSimulating || gameStatus === 'enemy_flying'
-                ? 'Stop 🛑'
-                : 'Launch'}
+            <span style={{ fontSize: '0.95rem' }}>{level.difficultyRating.tierEmoji}</span>
+            <span style={{ color: '#f8fafc', fontWeight: '800' }}>{level.difficultyRating.tierLabel} Tier</span>
+            <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+            
+            {/* Source Label & Seed */}
+            <span style={{ color: '#c084fc', fontWeight: '600', fontSize: '0.74rem' }}>
+              {level.generationMode === 'preset'
+                ? `🏆 Golden Seed #${level.seed}`
+                : level.generationMode === 'runtime_scored'
+                ? `🎯 Mined Seed #${level.seed}`
+                : `🎲 Random Seed #${level.seed}`}
             </span>
-          </button>
+          </div>
         )}
-      </div>
 
-      {/* Telemetry Stats Readout */}
-      <div
-        className="telemetry-stats hide-on-mobile"
-        style={{ fontSize: '0.82rem', gap: '12px', fontVariantNumeric: 'tabular-nums' }}
-      >
-        <span style={{ color: '#38bdf8', minWidth: '80px', display: 'inline-block' }}>
-          🎯 {targetDist}px
-        </span>
-        <span style={{ color: '#4ade80', minWidth: '85px', display: 'inline-block' }}>
-          ⚡ {currentSpeed}px/s
-        </span>
+        {/* Current Session Status Badge (Score & Shots Taken) */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '4px 12px',
+            borderRadius: '16px',
+            background: 'rgba(15, 23, 42, 0.65)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            fontSize: '0.78rem',
+            fontWeight: '700',
+            fontVariantNumeric: 'tabular-nums',
+            color: '#e2e8f0',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ color: '#f59e0b' }}>🏆</span>
+            <span style={{ opacity: 0.7, fontSize: '0.72rem' }}>Score:</span>
+            <strong style={{ color: '#fbbf24' }}>{score || 0}</strong>
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ color: '#38bdf8' }}>🎯</span>
+            <span style={{ opacity: 0.7, fontSize: '0.72rem' }}>Shots:</span>
+            <strong style={{ color: '#38bdf8' }}>{(pastTrails || []).length}</strong>
+          </span>
+        </div>
       </div>
 
       {/* System Actions: Fullscreen & Menu Buttons */}

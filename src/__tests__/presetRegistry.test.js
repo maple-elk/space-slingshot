@@ -44,10 +44,35 @@ describe('Golden Seed Preset Registry', () => {
   it('integrates with generateRandomLevel when requesting Singularity tier', () => {
     const level = generateRandomLevel(960, 600, {
       difficultyTier: 'singularity',
+      generationMode: 'preset',
     });
 
     expect(level).toBeDefined();
+    expect(level.generationMode).toBe('preset');
     expect(level.planets.length).toBeGreaterThanOrEqual(2);
+    expect(level.difficultyRating).toBeDefined();
+  });
+
+  it('supports explicit generationMode: random pathway', () => {
+    const level = generateRandomLevel(960, 600, {
+      generationMode: 'random',
+      seed: 4242,
+    });
+
+    expect(level).toBeDefined();
+    expect(level.generationMode).toBe('random');
+    expect(level.difficultyRating).toBeDefined();
+  });
+
+  it('supports explicit generationMode: runtime_scored pathway', () => {
+    const level = generateRandomLevel(960, 600, {
+      generationMode: 'runtime_scored',
+      difficultyTier: 'easy',
+      seed: 1234,
+    });
+
+    expect(level).toBeDefined();
+    expect(level.generationMode).toBe('runtime_scored');
     expect(level.difficultyRating).toBeDefined();
   });
 });
