@@ -15,6 +15,7 @@ describe('Full App Rendering', () => {
     const html = renderToString(<SpaceSlingshot soundEnabled={true} onToggleSound={() => {}} isFullscreen={false} onToggleFullscreen={() => {}} />);
     expect(html).toContain('slingshot-telemetry-bar');
     expect(html).toContain('telemetry-launch-controls');
+    expect(html).toContain('Fullscreen');
     expect(html).not.toContain('NaN');
   });
 });

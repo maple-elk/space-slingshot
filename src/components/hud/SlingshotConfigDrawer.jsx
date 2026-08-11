@@ -82,7 +82,18 @@ export function SlingshotConfigDrawer(props) {
               <span style={{ color: '#38bdf8', fontWeight: '800' }}>System Quick Controls</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', marginTop: '6px' }}>
+              {onToggleFullscreen && (
+                <button
+                  className={`btn-icon ${isFullscreen ? 'active' : ''}`}
+                  onClick={onToggleFullscreen}
+                  style={{ justifyContent: 'center', padding: '8px 12px', fontSize: '0.82rem' }}
+                >
+                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                  <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+                </button>
+              )}
+
               {onToggleSound && (
                 <button
                   className={`btn-icon ${soundEnabled ? 'active' : ''}`}

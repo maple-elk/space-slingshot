@@ -117,8 +117,19 @@ export function SlingshotTelemetryBar({
         </span>
       </div>
 
-      {/* System Actions: Single Prominent Menu & Settings Button */}
+      {/* System Actions: Fullscreen & Menu Buttons */}
       <div className="telemetry-actions">
+        {onToggleFullscreen && (
+          <button
+            className={`btn-icon ${isFullscreen ? 'active' : ''}`}
+            onClick={onToggleFullscreen}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            style={{ padding: '6px 12px', fontSize: '0.82rem' }}
+          >
+            {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+            <span className="hide-on-mobile">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+          </button>
+        )}
         <button
           className={`btn-config-prominent ${isConfigOpen ? 'active' : ''}`}
           onClick={onToggleConfig}
