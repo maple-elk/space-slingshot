@@ -28,7 +28,7 @@ export function calculateAimFromPointer(coords, ship) {
   const angle = Math.round(((rad * 180) / Math.PI + 360) % 360);
 
   const dist = Math.hypot(dx, dy);
-  const power = Math.max(10, Math.min(200, Math.round(dist / 1.7)));
+  const power = Math.max(10, Math.min(60, Math.round(dist / 1.7)));
 
   return { angle, power };
 }
@@ -123,7 +123,7 @@ export function useGameInput({
         dispatch({ type: 'SET_AIM', angle: (angle + step) % 360 });
       } else if (e.code === 'ArrowUp') {
         e.preventDefault();
-        dispatch({ type: 'SET_AIM', power: Math.min(200, power + step) });
+        dispatch({ type: 'SET_AIM', power: Math.min(60, power + step) });
       } else if (e.code === 'ArrowDown') {
         e.preventDefault();
         dispatch({ type: 'SET_AIM', power: Math.max(10, power - step) });

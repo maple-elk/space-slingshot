@@ -1,5 +1,5 @@
-import { simulateTrajectory } from './trajectorySimulator';
-import { DEFAULT_G } from '../../utils/physics';
+import { simulateTrajectory } from './trajectorySimulator.js';
+import { DEFAULT_G } from '../../utils/physics.js';
 
 export const DIFFICULTY_TIERS = {
   easy: { key: 'easy', label: 'Easy', emoji: '🟢' },
@@ -28,7 +28,7 @@ export function analyzeLevelSolutions(level, options = {}) {
   const {
     angleSteps = 72,
     powerMin = 30,
-    powerMax = 200,
+    powerMax = 60,
     powerSteps = 10,
     maxFrames = 600,
     shooter = 'player',
@@ -124,7 +124,9 @@ export function evaluateMapDifficulty(level, options = {}) {
     analysis;
 
   let tier = 'easy';
-  if (solutionCount > 0 && (minTurnDeg > 540 || windowDensity < 0.05)) {
+  if (solutionCount > 0 && hasDirectShot && minTurnDeg < 30 && (level.planets || []).length === 0) {
+    tier = 'easy';
+  } else if (solutionCount > 0 && (minTurnDeg > 540 || windowDensity < 0.05)) {
     tier = 'nightmare';
   } else if (solutionCount > 0 && (minTurnDeg > 360 || windowDensity < 0.2)) {
     tier = 'extreme';
@@ -151,5 +153,82 @@ export function evaluateMapDifficulty(level, options = {}) {
     maxLoops,
     hasDirectShot,
     solvable: solutionCount > 0,
+  };
+}
+
+/**
+ * Solves a level using an exhaustive 360,000-trajectory Hyper Grid search (0.1° angle resolution, 30-60 power range).
+ * Calculates solution windows, curvature metrics, and Lyapunov chaos divergence.
+ *
+ * @param {import('../../types/entitySchemas').Level} level
+ * @param {Object} [options]
+ * @returns {Object} Full hyper-grid analysis metrics
+ */
+export function solveHyperGridTrajectories(level, options = {}) {
+  const angleStep = options.angleStep || 0.1;
+  const angleSteps = Math.round(360 / angleStep);
+  const powerMin = options.powerMin !== undefined ? options.powerMin : 30;
+  const powerMax = options.powerMax !== undefined ? options.powerMax : 60;
+  const powerSteps = options.powerSteps !== undefined ? options.powerSteps : 16;
+  const maxFrames = options.maxFrames || 2000;
+
+  const analysis = analyzeLevelSolutions(level, {
+    angleSteps,
+    powerMin,
+    powerMax,
+    powerSteps,
+    maxFrames,
+    ...options,
+  });
+
+  const { solutions = [], solutionCount = 0, hasDirectShot = false, minTurnDeg = 0, maxTurnDeg = 0 } = analysis;
+
+  let maxSolutionWindowDeg = 0;
+  let dominantCriterion = 'none';
+
+  if (solutionCount > 0) {
+    const sortedAngles = [...solutions].map((s) => s.angleDeg).sort((a, b) => a - b);
+    let maxClusterWindow = 0.1;
+    let currentWindow = 0.1;
+
+    for (let i = 1; i < sortedAngles.length; i++) {
+      if (Math.abs(sortedAngles[i] - sortedAngles[i - 1]) <= angleStep * 1.5) {
+        currentWindow += angleStep;
+      } else {
+        if (currentWindow > maxClusterWindow) maxClusterWindow = currentWindow;
+        currentWindow = 0.1;
+      }
+    }
+    if (currentWindow > maxClusterWindow) maxClusterWindow = currentWindow;
+    maxSolutionWindowDeg = Number(maxClusterWindow.toFixed(2));
+  }
+
+  // Count distinct bodies (planets, black holes, pulsars)
+  const planetCount = (level.planets || []).length;
+  const blackHoleCount = (level.blackHoles || []).length;
+  const pulsarCount = (level.pulsars || []).length;
+  const maxDistinctBodies = planetCount + blackHoleCount + pulsarCount;
+
+  // Determine dominant classification criterion for observability
+  if (minTurnDeg > 360) {
+    dominantCriterion = 'turn_degree';
+  } else if (maxSolutionWindowDeg > 0 && maxSolutionWindowDeg < 2.0) {
+    dominantCriterion = 'window_tightness';
+  } else if (maxDistinctBodies >= 4) {
+    dominantCriterion = 'body_interaction';
+  } else {
+    dominantCriterion = 'direct_sightline';
+  }
+
+  return {
+    ...analysis,
+    solutions,
+    solutionCount,
+    hasDirectShot,
+    minTurnDeg: minTurnDeg || 0,
+    maxTurnDeg: maxTurnDeg || 0,
+    maxSolutionWindowDeg,
+    maxDistinctBodies,
+    dominantCriterion,
   };
 }

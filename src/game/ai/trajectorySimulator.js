@@ -1,4 +1,4 @@
-import { updateProjectilePhysics, checkCollisions, DEFAULT_G } from '../../utils/physics';
+import { updateProjectilePhysics, checkCollisions, DEFAULT_G } from '../../utils/physics.js';
 
 /**
  * Headless Trajectory Simulator for AI Solver and Trajectory Prediction

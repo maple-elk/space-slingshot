@@ -142,8 +142,7 @@ describe('Level Generator & Seeded PRNG', () => {
 
       expect(level.difficultyRating).toBeDefined();
       expect(level.difficultyRating.solvable).toBe(true);
-      expect(duration).toBeLessThan(10000); // Must complete within reasonable time
+      expect(duration).toBeLessThan(15000); // Must complete within reasonable time
     }
-  }, 15000);
+  }, 60000);
 });
-

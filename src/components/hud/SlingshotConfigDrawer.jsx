@@ -1,7 +1,11 @@
-import React from 'react';
-import { X, Sliders, Sparkles, Globe, Eye, EyeOff, Volume2, VolumeX, RotateCcw, Maximize2, Minimize2, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Sliders, Sparkles, Globe, Eye, EyeOff, Volume2, VolumeX, RotateCcw, Maximize2, Minimize2, Settings, Link, Check, Compass } from 'lucide-react';
+import { copyDeepLinkToClipboard } from '../../utils/deepLink';
+import { getAllGoldenPresets } from '../../game/data/presetRegistry.js';
 
 export function SlingshotConfigDrawer(props) {
+  const [copied, setCopied] = useState(false);
+  const [selectedPresetTier, setSelectedPresetTier] = useState('level5');
   const {
     isOpen,
     onClose,
@@ -41,6 +45,14 @@ export function SlingshotConfigDrawer(props) {
   if (!isOpen) return null;
 
   const applyNewConfig = handleNewLevel || onApplyNewConfig;
+
+  const handleCopyLink = async () => {
+    const success = await copyDeepLinkToClipboard(s, level?.seed, true);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   const handleToggleObject = (key, value) => {
     dispatch({ type: 'SET_SETTING', key, value });
@@ -106,16 +118,21 @@ export function SlingshotConfigDrawer(props) {
                 <span>New System</span>
               </button>
 
-              {onToggleFullscreen && (
-                <button
-                  className="btn-icon"
-                  onClick={onToggleFullscreen}
-                  style={{ justifyContent: 'center', padding: '8px 12px', fontSize: '0.82rem' }}
-                >
-                  {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                  <span>{isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
-                </button>
-              )}
+              <button
+                className={`btn-icon ${copied ? 'active' : ''}`}
+                onClick={handleCopyLink}
+                title="Copy Shareable Deep Link URL to Clipboard"
+                style={{
+                  justifyContent: 'center',
+                  padding: '8px 12px',
+                  fontSize: '0.82rem',
+                  borderColor: copied ? '#4ade80' : 'rgba(255,255,255,0.15)',
+                  color: copied ? '#4ade80' : 'inherit',
+                }}
+              >
+                {copied ? <Check size={16} color="#4ade80" /> : <Link size={16} />}
+                <span>{copied ? 'Copied Link!' : 'Deep Link'}</span>
+              </button>
             </div>
           </div>
 
@@ -126,27 +143,135 @@ export function SlingshotConfigDrawer(props) {
               <span style={{ color: '#a855f7', fontWeight: '800' }}>Difficulty & Map Complexity</span>
             </div>
 
-            <div className="planet-cnt-buttons" style={{ marginTop: '8px' }}>
-              {[
-                { id: 'auto', label: 'Auto (Adaptive)' },
-                { id: 'easy', label: '🟢 Easy' },
-                { id: 'medium', label: '🟡 Medium' },
-                { id: 'hard', label: '🔴 Hard' },
-                { id: 'extreme', label: '⚡ Extreme' },
-                { id: 'nightmare', label: '☠️ Nightmare' },
-              ].map((tierItem) => (
-                <button
-                  key={tierItem.id}
-                  className={`preset-btn ${difficultyTier === tierItem.id ? 'active' : ''}`}
-                  style={{ padding: '6px 8px', fontSize: '0.78rem' }}
-                  onClick={() => {
-                    dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: tierItem.id });
-                    if (applyNewConfig) applyNewConfig({ difficultyTier: tierItem.id });
-                  }}
-                >
-                  {tierItem.label}
-                </button>
-              ))}
+            {/* Compact Smooth Difficulty Range Slider */}
+            <div style={{ marginTop: '10px', background: 'rgba(255, 255, 255, 0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+              {(() => {
+                const TIER_ORDER = [
+                  { id: 'auto', label: '🎲 Random (Procedural)', color: '#38bdf8' },
+                  { id: 'easy', label: '🟢 Easy (Level 2)', color: '#4ade80' },
+                  { id: 'medium', label: '🟡 Medium (Level 3)', color: '#f59e0b' },
+                  { id: 'hard', label: '🔴 Hard (Level 4)', color: '#f43f5e' },
+                  { id: 'nightmare', label: '☠️ Nightmare (Level 4)', color: '#ef4444' },
+                  { id: 'singularity', label: '🌀 Singularity (Level 5)', color: '#c084fc' },
+                ];
+                const activeIdx = Math.max(0, TIER_ORDER.findIndex((t) => t.id === difficultyTier));
+                const currentTierObj = TIER_ORDER[activeIdx] || TIER_ORDER[0];
+
+                return (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.8rem' }}>
+                      <span style={{ opacity: 0.8 }}>Target Tier:</span>
+                      <span style={{ fontWeight: '800', color: currentTierObj.color }}>
+                        {currentTierObj.label}
+                      </span>
+                    </div>
+
+                    <input
+                      type="range"
+                      min="0"
+                      max="5"
+                      step="1"
+                      value={activeIdx}
+                      onChange={(e) => {
+                        const newTierObj = TIER_ORDER[Number(e.target.value)];
+                        if (newTierObj) {
+                          dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: newTierObj.id });
+                          if (applyNewConfig) applyNewConfig({ difficultyTier: newTierObj.id });
+                        }
+                      }}
+                      style={{ width: '100%', accentColor: currentTierObj.color, cursor: 'pointer' }}
+                    />
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', opacity: 0.6, marginTop: '4px' }}>
+                      <span>Random</span>
+                      <span>Easy</span>
+                      <span>Med</span>
+                      <span>Hard</span>
+                      <span>Nightmare</span>
+                      <span>Singularity</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Curated Golden Seed Presets Browser Sub-Panel */}
+            <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px rgba(255, 255, 255, 0.1) solid' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: '700', color: '#a855f7', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Compass size={14} color="#a855f7" />
+                <span>Golden Presets Catalog (161 Mined Maps)</span>
+              </div>
+
+              {/* Tier selector for presets browser in compact 2x2 grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '6px' }}>
+                {[
+                  { id: 'level2', label: 'Standard (50)' },
+                  { id: 'level3', label: 'Hard (50)' },
+                  { id: 'level4', label: 'Nightmare (50)' },
+                  { id: 'level5', label: '🌀 Singularity (11)' },
+                ].map((pt) => (
+                  <button
+                    key={pt.id}
+                    className={`preset-btn ${selectedPresetTier === pt.id ? 'active' : ''}`}
+                    style={{ padding: '4px 6px', fontSize: '0.7rem', width: '100%' }}
+                    onClick={() => setSelectedPresetTier(pt.id)}
+                  >
+                    {pt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Grid of preset map cards */}
+              <div
+                style={{
+                  maxHeight: '140px',
+                  overflowY: 'auto',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                  gap: '6px',
+                  paddingRight: '4px',
+                }}
+              >
+                {(getAllGoldenPresets()[selectedPresetTier] || []).map((p, idx) => {
+                  const rating = p.difficultyRating || {};
+                  const isSelected = level?.seed === p.seed;
+
+                  return (
+                    <div
+                      key={p.seed || idx}
+                      onClick={() => {
+                        dispatch({ type: 'SET_SETTING', key: 'difficultyTier', value: rating.tier || selectedPresetTier });
+                        if (applyNewConfig) {
+                          applyNewConfig({
+                            difficultyTier: rating.tier || selectedPresetTier,
+                            seed: p.seed,
+                            bypassPresets: false,
+                          });
+                        }
+                      }}
+                      style={{
+                        padding: '6px',
+                        borderRadius: '6px',
+                        background: isSelected ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isSelected ? '1px solid #a855f7' : '1px solid rgba(255, 255, 255, 0.1)',
+                        cursor: 'pointer',
+                        fontSize: '0.72rem',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ fontWeight: '700', color: isSelected ? '#a855f7' : '#e2e8f0' }}>
+                        Seed #{p.seed}
+                      </div>
+                      <div style={{ opacity: 0.85, fontSize: '0.68rem', marginTop: '2px' }}>
+                        Score: {rating.compositeScore || 'N/A'}
+                      </div>
+                      <div style={{ opacity: 0.7, fontSize: '0.66rem' }}>
+                        Turn: {Math.round(rating.minTurnDeg || 0)}° | Win: {rating.maxSolutionWindowDeg || 0.1}°
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {level?.difficultyRating && (
@@ -172,7 +297,7 @@ export function SlingshotConfigDrawer(props) {
                   </span>
                 </div>
                 <div style={{ opacity: 0.85, fontSize: '0.74rem' }}>
-                  Min Turn: {Math.round(level.difficultyRating.minTurnDeg)}° | Max Turn: {Math.round(level.difficultyRating.maxTurnDeg)}° | Window: {level.difficultyRating.windowDensity.toFixed(2)}% ({level.difficultyRating.solutionCount} solutions)
+                  Min Turn: {Math.round(level.difficultyRating.minTurnDeg || 0)}° | Max Turn: {Math.round(level.difficultyRating.maxTurnDeg || 0)}° | Window: {(level.difficultyRating.windowDensity !== undefined ? level.difficultyRating.windowDensity : (level.difficultyRating.maxSolutionWindowDeg || 0)).toFixed(2)}° ({level.difficultyRating.solutionCount || 0} solutions)
                 </div>
               </div>
             )}

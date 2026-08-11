@@ -1,0 +1,1594 @@
+[
+  {
+    "seed": 1441050,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1451057,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1461064,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1441050,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1451057,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1461064,
+    "ship": {
+      "x": 504,
+      "y": 427
+    },
+    "target": {
+      "x": 436,
+      "y": 168,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 431,
+        "y": 313,
+        "radius": 54,
+        "mass": 85,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 81,
+        "y": 430,
+        "radius": 34,
+        "mass": 66,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 783,
+        "y": 259,
+        "radius": 46,
+        "mass": 88,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 301,
+        "y": 128,
+        "radius": 48,
+        "mass": 97,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 316,
+        "y": 425,
+        "radius": 50,
+        "mass": 80,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 105.69,
+      "minTurnDeg": 248.3242842745,
+      "maxTurnDeg": 324.9937304672636,
+      "maxSolutionWindowDeg": 0.1,
+      "distinctBodies": 5,
+      "solutionCount": 7,
+      "dominantCriterion": "window_tightness"
+    }
+  },
+  {
+    "seed": 1761274,
+    "ship": {
+      "x": 669,
+      "y": 372
+    },
+    "target": {
+      "x": 322,
+      "y": 211,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 646,
+        "y": 248,
+        "radius": 34,
+        "mass": 93,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 407,
+        "y": 146,
+        "radius": 44,
+        "mass": 186,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 170,
+        "y": 131,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 349.7135117612779
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 33.195,
+      "minTurnDeg": 584.3689716379305,
+      "maxTurnDeg": 1167.0245061889168,
+      "maxSolutionWindowDeg": 0.35,
+      "distinctBodies": 3,
+      "solutionCount": 34,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 1771281,
+    "ship": {
+      "x": 669,
+      "y": 372
+    },
+    "target": {
+      "x": 322,
+      "y": 211,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 646,
+        "y": 248,
+        "radius": 34,
+        "mass": 93,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 407,
+        "y": 146,
+        "radius": 44,
+        "mass": 186,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 170,
+        "y": 131,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 349.7135117612779
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 33.195,
+      "minTurnDeg": 584.3689716379305,
+      "maxTurnDeg": 1167.0245061889168,
+      "maxSolutionWindowDeg": 0.35,
+      "distinctBodies": 3,
+      "solutionCount": 34,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 1761274,
+    "ship": {
+      "x": 669,
+      "y": 372
+    },
+    "target": {
+      "x": 322,
+      "y": 211,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 646,
+        "y": 248,
+        "radius": 34,
+        "mass": 93,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 407,
+        "y": 146,
+        "radius": 44,
+        "mass": 186,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 170,
+        "y": 131,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 349.7135117612779
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 33.195,
+      "minTurnDeg": 584.3689716379305,
+      "maxTurnDeg": 1167.0245061889168,
+      "maxSolutionWindowDeg": 0.35,
+      "distinctBodies": 3,
+      "solutionCount": 34,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 1771281,
+    "ship": {
+      "x": 669,
+      "y": 372
+    },
+    "target": {
+      "x": 322,
+      "y": 211,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 646,
+        "y": 248,
+        "radius": 34,
+        "mass": 93,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 407,
+        "y": 146,
+        "radius": 44,
+        "mass": 186,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 170,
+        "y": 131,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 349.7135117612779
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 33.195,
+      "minTurnDeg": 584.3689716379305,
+      "maxTurnDeg": 1167.0245061889168,
+      "maxSolutionWindowDeg": 0.35,
+      "distinctBodies": 3,
+      "solutionCount": 34,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 670511,
+    "ship": {
+      "x": 154,
+      "y": 276
+    },
+    "target": {
+      "x": 678,
+      "y": 151,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 315,
+        "y": 350,
+        "radius": 31,
+        "mass": 130,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 368,
+        "y": 95,
+        "radius": 58,
+        "mass": 168,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 513,
+        "y": 192,
+        "radius": 35,
+        "mass": 184,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 702,
+        "y": 376,
+        "radius": 36,
+        "mass": 158,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 847,
+        "y": 136,
+        "radius": 58,
+        "mass": 188,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 570,
+        "y": 413,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 480.1964533654973
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 9.281,
+      "minTurnDeg": 398.45665417197415,
+      "maxTurnDeg": 681.6198765510123,
+      "maxSolutionWindowDeg": 4.6,
+      "distinctBodies": 6,
+      "solutionCount": 92,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 680518,
+    "ship": {
+      "x": 154,
+      "y": 276
+    },
+    "target": {
+      "x": 678,
+      "y": 151,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 315,
+        "y": 350,
+        "radius": 31,
+        "mass": 130,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 368,
+        "y": 95,
+        "radius": 58,
+        "mass": 168,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 513,
+        "y": 192,
+        "radius": 35,
+        "mass": 184,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 702,
+        "y": 376,
+        "radius": 36,
+        "mass": 158,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 847,
+        "y": 136,
+        "radius": 58,
+        "mass": 188,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 570,
+        "y": 413,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 480.1964533654973
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 9.281,
+      "minTurnDeg": 398.45665417197415,
+      "maxTurnDeg": 681.6198765510123,
+      "maxSolutionWindowDeg": 4.6,
+      "distinctBodies": 6,
+      "solutionCount": 92,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 670511,
+    "ship": {
+      "x": 154,
+      "y": 276
+    },
+    "target": {
+      "x": 678,
+      "y": 151,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 315,
+        "y": 350,
+        "radius": 31,
+        "mass": 130,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 368,
+        "y": 95,
+        "radius": 58,
+        "mass": 168,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 513,
+        "y": 192,
+        "radius": 35,
+        "mass": 184,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 702,
+        "y": 376,
+        "radius": 36,
+        "mass": 158,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 847,
+        "y": 136,
+        "radius": 58,
+        "mass": 188,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 570,
+        "y": 413,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 480.1964533654973
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 9.281,
+      "minTurnDeg": 398.45665417197415,
+      "maxTurnDeg": 681.6198765510123,
+      "maxSolutionWindowDeg": 4.6,
+      "distinctBodies": 6,
+      "solutionCount": 92,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 680518,
+    "ship": {
+      "x": 154,
+      "y": 276
+    },
+    "target": {
+      "x": 678,
+      "y": 151,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 315,
+        "y": 350,
+        "radius": 31,
+        "mass": 130,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 368,
+        "y": 95,
+        "radius": 58,
+        "mass": 168,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 513,
+        "y": 192,
+        "radius": 35,
+        "mass": 184,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 702,
+        "y": 376,
+        "radius": 36,
+        "mass": 158,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 847,
+        "y": 136,
+        "radius": 58,
+        "mass": 188,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [
+      {
+        "id": "bh_1",
+        "x": 570,
+        "y": 413,
+        "radius": 18,
+        "eventRadius": 46,
+        "mass": 480.1964533654973
+      }
+    ],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 9.281,
+      "minTurnDeg": 398.45665417197415,
+      "maxTurnDeg": 681.6198765510123,
+      "maxSolutionWindowDeg": 4.6,
+      "distinctBodies": 6,
+      "solutionCount": 92,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 910679,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 920686,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 930693,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 940700,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 950707,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  },
+  {
+    "seed": 960714,
+    "ship": {
+      "x": 534,
+      "y": 175
+    },
+    "target": {
+      "x": 385,
+      "y": 378,
+      "radius": 24
+    },
+    "planets": [
+      {
+        "id": 1,
+        "x": 402,
+        "y": 239,
+        "radius": 46,
+        "mass": 202,
+        "fill": "#3b82f6",
+        "glow": "rgba(59, 130, 246, 0.35)",
+        "name": "Oceanus"
+      },
+      {
+        "id": 2,
+        "x": 292,
+        "y": 333,
+        "radius": 31,
+        "mass": 93,
+        "fill": "#ef4444",
+        "glow": "rgba(239, 68, 68, 0.35)",
+        "name": "Ares Prime"
+      },
+      {
+        "id": 3,
+        "x": 838,
+        "y": 262,
+        "radius": 30,
+        "mass": 76,
+        "fill": "#8b5cf6",
+        "glow": "rgba(139, 92, 246, 0.35)",
+        "name": "Nebula Alpha"
+      },
+      {
+        "id": 4,
+        "x": 657,
+        "y": 471,
+        "radius": 56,
+        "mass": 197,
+        "fill": "#f59e0b",
+        "glow": "rgba(245, 158, 11, 0.35)",
+        "name": "Helios Jr"
+      },
+      {
+        "id": 5,
+        "x": 136,
+        "y": 233,
+        "radius": 33,
+        "mass": 91,
+        "fill": "#10b981",
+        "glow": "rgba(16, 185, 129, 0.35)",
+        "name": "Verdant"
+      }
+    ],
+    "blackHoles": [],
+    "asteroids": [],
+    "wormholes": [],
+    "pulsars": [],
+    "boosters": [],
+    "shields": [],
+    "enemyShip": null,
+    "difficultyRating": {
+      "tier": "level4",
+      "solvable": true,
+      "compositeScore": 7.786,
+      "minTurnDeg": 360.15768345970145,
+      "maxTurnDeg": 746.9462079853054,
+      "maxSolutionWindowDeg": 5.6,
+      "distinctBodies": 5,
+      "solutionCount": 37,
+      "dominantCriterion": "turn_degree"
+    }
+  }
+]

@@ -2,7 +2,8 @@ import React, { useReducer, useEffect, useRef, useCallback, useState } from 'rea
 import { generateRandomLevel, calculateIndividualGravitationalAccels, calculateGravitationalAccel } from '../utils/physics';
 import { playPopSound, playSnapSound, playVictorySound } from '../utils/audio';
 import { gameEvents } from '../utils/EventBus';
-import { gameReducer, initialGameState } from '../game/gameReducer';
+import { gameReducer, createInitialGameState } from '../game/gameReducer';
+import { parseDeepLinkQuery, syncUrlWithState } from '../utils/deepLink';
 import { useCamera } from '../game/camera/useCamera';
 import { useGameInput } from '../game/input/useGameInput';
 import { useGameLoop } from '../game/loop/useGameLoop';
@@ -18,8 +19,8 @@ export default function SpaceSlingshot({
   isFullscreen = false,
   onToggleFullscreen,
 }) {
-  const [state, dispatch] = useReducer(gameReducer, initialGameState);
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [state, dispatch] = useReducer(gameReducer, null, () => createInitialGameState());
+  const [isConfigOpen, setIsConfigOpen] = useState(() => parseDeepLinkQuery().isConfigOpen);
   const [isGeneratingLevel, setIsGeneratingLevel] = useState(false);
   const svgRef = useRef(null);
 
@@ -61,6 +62,11 @@ export default function SpaceSlingshot({
 
   const isSimulating = gameStatus === 'flying' || gameStatus === 'enemy_flying';
 
+  // Synchronize state and deep link parameters with URL history
+  useEffect(() => {
+    syncUrlWithState(state, level?.seed, isConfigOpen);
+  }, [state, level?.seed, isConfigOpen]);
+
   // Sound Event Bus Subscriptions
   useEffect(() => {
     const unsubs = [
@@ -90,13 +96,13 @@ export default function SpaceSlingshot({
           massMult,
           boardScale: bScale,
           difficultyTier,
-          enableBlackHoles,
-          enableAsteroids,
-          enableWormholes,
-          enablePulsars,
-          enableBoosters,
-          enableShields,
-          enableEnemyShip,
+          enableBlackHoles: enableBlackHoles || undefined,
+          enableAsteroids: enableAsteroids || undefined,
+          enableWormholes: enableWormholes || undefined,
+          enablePulsars: enablePulsars || undefined,
+          enableBoosters: enableBoosters || undefined,
+          enableShields: enableShields || undefined,
+          enableEnemyShip: enableEnemyShip || undefined,
           ...customConfig,
         };
 
@@ -316,7 +322,7 @@ export default function SpaceSlingshot({
       )}
 
       {/* Async Level Generation Spinner Modal */}
-      <LevelGenerationModal isOpen={isGeneratingLevel} difficultyTier={difficultyTier} />
+      <LevelGenerationModal isOpen={state.isGeneratingLevel || false} difficultyTier={difficultyTier} />
     </div>
   );
 }

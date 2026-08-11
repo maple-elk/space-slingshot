@@ -2,6 +2,18 @@ import React from 'react';
 import { Cpu } from 'lucide-react';
 
 const TIER_MESSAGES = {
+  singularity: {
+    title: '🌀 Singularity System Synthesis',
+    subtitle: 'Synthesizing 360°+ multi-loop slingshots & sub-1° needle corridors...',
+    tip: 'Retrieving elite top-0.1% golden seed orbital physics puzzle.',
+    color: '#c084fc',
+  },
+  level5: {
+    title: '🌀 Singularity System Synthesis',
+    subtitle: 'Synthesizing 360°+ multi-loop slingshots & sub-1° needle corridors...',
+    tip: 'Retrieving elite top-0.1% golden seed orbital physics puzzle.',
+    color: '#c084fc',
+  },
   nightmare: {
     title: '☠️ Nightmare System Synthesis',
     subtitle: 'Synthesizing hyper-narrow gravity funnels & orbital loop trajectories...',
@@ -33,8 +45,8 @@ const TIER_MESSAGES = {
     color: '#10b981',
   },
   auto: {
-    title: '🌌 Solar System Generation',
-    subtitle: 'Simulating gravitational physics & celestial body layout...',
+    title: '🎲 Random Procedural Synthesis',
+    subtitle: 'Generating dynamic orbital flight paths & solar system layout...',
     tip: 'Verifying solvability across candidate trajectories.',
     color: '#38bdf8',
   },

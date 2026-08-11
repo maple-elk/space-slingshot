@@ -1,6 +1,6 @@
-import { simulateTrajectory } from './trajectorySimulator';
-import { analyzeLevelSolutions } from './levelSolver';
-import { DEFAULT_G } from '../../utils/physics';
+import { simulateTrajectory } from './trajectorySimulator.js';
+import { analyzeLevelSolutions } from './levelSolver.js';
+import { DEFAULT_G } from '../../utils/physics.js';
 
 /**
  * Intelligent & Varied Enemy AI Aim Solver

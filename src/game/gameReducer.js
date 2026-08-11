@@ -1,32 +1,16 @@
 import { DEFAULT_G, generateRandomLevel } from '../utils/physics';
+import { parseDeepLinkQuery } from '../utils/deepLink';
 
-export const initialGameState = {
-  // Settings & Customization
-  difficultyTier: 'auto',
-  planetCount: 'auto',
-  gravityG: DEFAULT_G,
-  massMult: 1.0,
-  simSpeedScale: 1.0,
-  boardScale: 1.0,
-  enableBlackHoles: false,
-  enableAsteroids: false,
-  enableWormholes: false,
-  enablePulsars: false,
-  enableBoosters: false,
-  enableShields: false,
-  enableEnemyShip: false,
+export function createInitialGameState(searchString) {
+  const { parsedSettings, seed } = parseDeepLinkQuery(searchString);
 
-  // Visual Toggles
-  showGravityGradients: true,
-  showGravityVectors: true,
-  showNetVector: false,
-  showSettingsOverlay: false,
-
-  // Level & Physics Layout
-  level: generateRandomLevel(960, 600, {
+  const baseSettings = {
     difficultyTier: 'auto',
     planetCount: 'auto',
+    gravityG: DEFAULT_G,
     massMult: 1.0,
+    simSpeedScale: 1.0,
+    boardScale: 1.0,
     enableBlackHoles: false,
     enableAsteroids: false,
     enableWormholes: false,
@@ -34,34 +18,58 @@ export const initialGameState = {
     enableBoosters: false,
     enableShields: false,
     enableEnemyShip: false,
-  }),
+    showGravityGradients: true,
+    showGravityVectors: true,
+    showNetVector: false,
+    showSettingsOverlay: false,
+    ...parsedSettings,
+  };
 
-  // Aiming Controls
-  angle: 335,
-  power: 55,
-  isDraggingAim: false,
+  const levelConfig = {
+    difficultyTier: baseSettings.difficultyTier,
+    planetCount: baseSettings.planetCount,
+    gravityG: baseSettings.gravityG,
+    massMult: baseSettings.massMult,
+    boardScale: baseSettings.boardScale,
+    enableBlackHoles: parsedSettings.enableBlackHoles,
+    enableAsteroids: parsedSettings.enableAsteroids,
+    enableWormholes: parsedSettings.enableWormholes,
+    enablePulsars: parsedSettings.enablePulsars,
+    enableBoosters: parsedSettings.enableBoosters,
+    enableShields: parsedSettings.enableShields,
+    enableEnemyShip: baseSettings.enableEnemyShip,
+    seed: seed,
+  };
 
-  // Simulation & Game Status
-  gameStatus: 'idle', // 'idle' | 'flying' | 'enemy_aiming' | 'enemy_flying' | 'hit_target' | 'hit_enemy' | 'hit_player' | 'hit_planet' | 'black_hole' | 'out_of_bounds'
-  turnOwner: 'player', // 'player' | 'enemy'
-  score: 0,
-  projectilePos: null,
-  projectileVel: null,
-  projectileAccel: { ax: 0, ay: 0 },
-  trail: [],
-  pastTrails: [],
-  showAllPastTrails: false,
+  return {
+    ...baseSettings,
+    level: generateRandomLevel(960, 600, levelConfig),
+    angle: 335,
+    power: 55,
+    isDraggingAim: false,
+    gameStatus: 'idle', // 'idle' | 'flying' | 'enemy_aiming' | 'enemy_flying' | 'hit_target' | 'hit_enemy' | 'hit_player' | 'hit_planet' | 'black_hole' | 'out_of_bounds'
+    turnOwner: 'player', // 'player' | 'enemy'
+    score: 0,
+    projectilePos: null,
+    projectileVel: null,
+    projectileAccel: { ax: 0, ay: 0 },
+    trail: [],
+    pastTrails: [],
+    showAllPastTrails: false,
 
-  // Enemy State
-  enemyAimInfo: null,
-  enemyProjectilePos: null,
-  enemyProjectileVel: null,
-  enemyTrail: [],
+    // Enemy State
+    enemyAimInfo: null,
+    enemyProjectilePos: null,
+    enemyProjectileVel: null,
+    enemyTrail: [],
 
-  // Post-Round State
-  roundCompleted: false,
-  showEndSummary: false,
-};
+    // Post-Round State
+    roundCompleted: false,
+    showEndSummary: false,
+  };
+}
+
+export const initialGameState = createInitialGameState();
 
 export function gameReducer(state, action) {
   switch (action.type) {

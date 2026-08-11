@@ -19,27 +19,46 @@ export function mulberry32(seed) {
   };
 }
 
-import { analyzeLevelSolutions, evaluateMapDifficulty } from '../game/ai/levelSolver';
+import { analyzeLevelSolutions, evaluateMapDifficulty } from '../game/ai/levelSolver.js';
+import { getGoldenPreset } from '../game/data/presetRegistry.js';
 
 // Headless level solvability verification helper
 export function verifyLevelSolvability(level, gravityG = DEFAULT_G) {
-  const { solutionCount } = analyzeLevelSolutions(level, {
-    angleSteps: 24,
-    powerSteps: 5,
-    maxFrames: 380,
-    gravityG,
-  });
-  return solutionCount > 0;
+  const res = analyzeLevelSolutions(level, { gravityG, angleSteps: 72, powerSteps: 5 });
+  return res.solutionCount > 0;
 }
 
 // Generate random level layout with 360° rotational variety, obstacle occlusion, and guaranteed solvability
 export function generateRandomLevel(width = 960, height = 600, config = {}) {
-  const baseSeed = config.seed !== undefined ? Number(config.seed) : Math.floor(Math.random() * 2147483647);
-  const boardScale = config.boardScale ? Number(config.boardScale) : 1.0;
+  const baseSeed = config.seed !== undefined ? Number(config.seed) : Math.floor(Math.random() * 1000000);
+  const boardScale = config.boardScale || 1.0;
   const sW = width * boardScale;
   const sH = height * boardScale;
   const gravityG = config.gravityG !== undefined ? Number(config.gravityG) : DEFAULT_G;
   const requestedTier = config.difficultyTier || 'auto';
+
+  // Check for pre-mined Golden Seed Presets if not bypassing
+  if (!config.bypassPresets && requestedTier && requestedTier !== 'auto') {
+    const preset = getGoldenPreset(requestedTier, baseSeed);
+    if (preset) {
+      const level = JSON.parse(JSON.stringify(preset));
+      level.gravityG = gravityG;
+      level.seed = baseSeed;
+
+      if (config.enableEnemyShip === false) {
+        level.enemyShip = null;
+      } else if (config.enableEnemyShip && !level.enemyShip) {
+        level.enemyShip = { x: 750, y: 150, radius: 20, isAlive: true };
+      }
+
+      if (config.enableBlackHoles === false) {
+        level.blackHoles = [];
+      } else if (config.enableBlackHoles && (!level.blackHoles || level.blackHoles.length === 0)) {
+        level.blackHoles = [{ id: 'bh1', x: 480, y: 300, radius: 25, mass: 1200, fill: '#000000', glow: 'rgba(168, 85, 247, 0.6)' }];
+      }
+      return level;
+    }
+  }
   const budgetMap = {
     easy: 15,
     medium: 30,
@@ -61,14 +80,16 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     const rng = mulberry32(currentSeed);
 
     const isExtremeOrNightmare = requestedTier === 'extreme' || requestedTier === 'nightmare';
+    const isWildMix = config.wildMix || config.bypassPresets;
+
     const countSetting = config.planetCount || 'auto';
     const numPlanets =
       countSetting === 'auto'
-        ? (isExtremeOrNightmare ? 3 + Math.floor(rng() * 3) : 2 + Math.floor(rng() * 2))
+        ? (isWildMix ? 2 + Math.floor(rng() * 4) : (isExtremeOrNightmare ? 3 + Math.floor(rng() * 3) : 2 + Math.floor(rng() * 2)))
         : Math.max(1, Math.min(5, Number(countSetting)));
 
     const baseMassMult = config.massMult ? Number(config.massMult) : 1.0;
-    const massMult = isExtremeOrNightmare ? baseMassMult * 1.6 : baseMassMult;
+    const massMult = isWildMix ? baseMassMult * (0.8 + rng() * 1.4) : (isExtremeOrNightmare ? baseMassMult * 1.6 : baseMassMult);
 
     // Canvas Playable Boundaries (clear of edges & bottom HUD)
     const marginX = 80 * boardScale;
@@ -96,14 +117,12 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       sx = cX + rX * rFactor1 * Math.cos(theta1);
       sy = cY + rY * rFactor1 * Math.sin(theta1);
 
-      // Angle offset theta2 between 100° and 260° relative to theta1
       const deltaTheta = ((100 + rng() * 160) * Math.PI) / 180;
       const theta2 = theta1 + (rng() > 0.5 ? deltaTheta : -deltaTheta);
       const rFactor2 = 0.6 + rng() * 0.38;
       tx = cX + rX * rFactor2 * Math.cos(theta2);
       ty = cY + rY * rFactor2 * Math.sin(theta2);
 
-      // Clamp positions to playable arena bounds
       sx = Math.max(minX, Math.min(maxX, sx));
       sy = Math.max(minY, Math.min(maxY, sy));
       tx = Math.max(minX, Math.min(maxX, tx));
@@ -149,28 +168,37 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       return false;
     };
 
-    // Rule 2: Line-of-Sight Occlusion & Gravity Channel Placement for Planets
+    // Select Archetype Placement Pattern
+    const archetypes = ['slalom_gate', 'saddle_funnel', 'anchor_block', 'random_scatter', 'cluster'];
+    const selectedArchetype = isWildMix ? archetypes[Math.floor(rng() * archetypes.length)] : 'slalom_gate';
+
     for (let i = 0; i < numPlanets; i++) {
       let px, py, radius, mass;
       let attempts = 0;
 
       do {
         attempts++;
-        if (i === 0 && attempts < 40) {
-          // Place primary planet near mid-line between ship and target
+        if (selectedArchetype === 'slalom_gate' && i === 0 && attempts < 40) {
           const tLerp = 0.35 + rng() * 0.3;
           const mx = ship.x + (target.x - ship.x) * tLerp;
           const my = ship.y + (target.y - ship.y) * tLerp;
           const normX = -(target.y - ship.y);
           const normY = target.x - ship.x;
           const normLen = Math.hypot(normX, normY) || 1;
-          const offsetDist = isExtremeOrNightmare
-            ? (rng() > 0.5 ? 1 : -1) * (rng() * 20) * Math.sqrt(boardScale)
-            : (rng() > 0.5 ? 1 : -1) * (30 + rng() * 70) * Math.sqrt(boardScale);
+          const offsetDist = (rng() > 0.5 ? 1 : -1) * (15 + rng() * 55) * Math.sqrt(boardScale);
           px = mx + (normX / normLen) * offsetDist;
           py = my + (normY / normLen) * offsetDist;
+        } else if (selectedArchetype === 'saddle_funnel' && i < 2 && attempts < 40) {
+          const tLerp = i === 0 ? 0.3 : 0.7;
+          const mx = ship.x + (target.x - ship.x) * tLerp;
+          const my = ship.y + (target.y - ship.y) * tLerp;
+          const normX = -(target.y - ship.y);
+          const normY = target.x - ship.x;
+          const normLen = Math.hypot(normX, normY) || 1;
+          const side = i === 0 ? 1 : -1;
+          px = mx + (normX / normLen) * side * (40 + rng() * 40);
+          py = my + (normY / normLen) * side * (40 + rng() * 40);
         } else {
-          // Scatter secondary planets across free space
           px = minX + rng() * (maxX - minX);
           py = minY + rng() * (maxY - minY);
         }
@@ -194,8 +222,8 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       occupiedList.push(planetObj);
     }
 
-    // Optional Space Phenomena
-    const shouldEnableBlackHoles = config.enableBlackHoles ?? (isExtremeOrNightmare && rng() > 0.5);
+    // Optional Phenomena Mix
+    const shouldEnableBlackHoles = config.enableBlackHoles ?? (isWildMix ? rng() < 0.35 : (isExtremeOrNightmare && rng() > 0.5));
     if (shouldEnableBlackHoles) {
       let bx, by;
       let attempts = 0;

@@ -8,7 +8,7 @@ describe('Game Input Utilities', () => {
     const aim = calculateAimFromPointer(coords, ship);
 
     expect(aim.angle).toBe(0);
-    expect(aim.power).toBe(100); // 170 / 1.7 = 100
+    expect(aim.power).toBe(60); // 170 / 1.7 = 100 capped to max 60
   });
 
   it('calculateAimFromPointer computes angle 90 deg for straight down pointer', () => {
@@ -27,7 +27,7 @@ describe('Game Input Utilities', () => {
     expect(minAim.power).toBe(10);
 
     const maxAim = calculateAimFromPointer({ x: 1000, y: 300 }, ship);
-    expect(maxAim.power).toBe(200);
+    expect(maxAim.power).toBe(60);
   });
 
   it('getSVGCoordinates returns (0, 0) if svg element is null', () => {

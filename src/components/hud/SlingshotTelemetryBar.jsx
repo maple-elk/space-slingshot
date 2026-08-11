@@ -65,7 +65,7 @@ export function SlingshotTelemetryBar({
           <input
             type="range"
             min="10"
-            max="200"
+            max="60"
             value={power}
             disabled={isLaunchDisabled}
             onChange={(e) => dispatch && dispatch({ type: 'SET_AIM', power: Number(e.target.value) })}
