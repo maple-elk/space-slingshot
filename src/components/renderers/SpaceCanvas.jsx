@@ -64,17 +64,23 @@ export function SpaceCanvas({
     activeEnemyPath = enemyTrail;
   }
 
+  // Determine active ship & vector color based on turnOwner
+  const isDuelMode = level.generationMode === 'duel';
+  const isP2Turn = turnOwner === 'player2';
+  const activeShip = (isP2Turn && enemyShip) ? enemyShip : ship;
+  const vectorColor = isP2Turn ? '#ef4444' : (turnOwner === 'player1' ? '#06b6d4' : '#f59e0b');
+
   // Aiming vector end point in SVG
   const rad = (angle * Math.PI) / 180;
   const aimLength = power * 1.7;
   const aimVectorEnd = {
-    x: ship.x + aimLength * Math.cos(rad),
-    y: ship.y + aimLength * Math.sin(rad),
+    x: activeShip.x + aimLength * Math.cos(rad),
+    y: activeShip.y + aimLength * Math.sin(rad),
   };
 
-  // Threat Arc Path for Enemy Aiming phase
+  // Threat Arc Path for Enemy Aiming phase (1P vs AI)
   let enemyThreatArcPath = '';
-  if (enemyShip && enemyAimInfo && gameStatus === 'enemy_aiming') {
+  if (!isDuelMode && enemyShip && enemyAimInfo && gameStatus === 'enemy_aiming') {
     const eRad = (enemyAimInfo.angleDeg * Math.PI) / 180;
     const spread = 0.35;
     const r = 160;
@@ -86,6 +92,7 @@ export function SpaceCanvas({
   }
 
   const currentPos = projectilePos || ship;
+  const isHumanTurn = turnOwner === 'player' || turnOwner === 'player1' || turnOwner === 'player2';
 
   return (
     <svg
@@ -147,106 +154,58 @@ export function SpaceCanvas({
       {displayedPastTrails.map((past, idx) => {
         if (!past.points || past.points.length === 0) return null;
         const color =
-          past.status === 'hit_target'
-            ? '#4ade80'
-            : past.status === 'hit_enemy'
-            ? '#ec4899'
-            : past.status === 'black_hole'
+          past.shooter === 'player2'
             ? '#f97316'
-            : past.status === 'hit_planet'
-            ? '#f87171'
-            : '#cbd5e1';
-
-        const endPt = past.points[past.points.length - 1];
-        const labelText = `#${past.shotNumber || idx + 1}`;
-
+            : (past.status === 'hit_target' || past.status === 'hit_enemy' || past.status === 'hit_p2'
+            ? '#10b981'
+            : past.status === 'hit_player' || past.status === 'hit_p1'
+            ? '#ef4444'
+            : '#38bdf8');
         return (
-          <g key={past.id || idx}>
-            <polyline
-              points={past.points.map((p) => `${p.x},${p.y}`).join(' ')}
-              fill="none"
-              stroke={color}
-              strokeWidth="2"
-              strokeDasharray="4 3"
-              strokeLinecap="round"
-              opacity={past.opacity}
-            />
-            {endPt && (
-              <g transform={`translate(${endPt.x}, ${endPt.y})`} opacity={past.opacity}>
-                <circle r="8" fill="rgba(15, 23, 42, 0.85)" stroke={color} strokeWidth="1.2" />
-                <text
-                  textAnchor="middle"
-                  dy="3"
-                  fill={color}
-                  fontSize="8"
-                  fontWeight="800"
-                  fontFamily="sans-serif"
-                >
-                  {labelText}
-                </text>
-              </g>
-            )}
-          </g>
+          <polyline
+            key={past.id || idx}
+            points={past.points.map((p) => `${p.x},${p.y}`).join(' ')}
+            fill="none"
+            stroke={color}
+            strokeWidth="2"
+            strokeDasharray="4 4"
+            opacity="0.55"
+          />
         );
       })}
 
-      {/* Planets */}
+      {/* Space Phenomena Objects */}
+      {asteroids.map((ast) => (
+        <AsteroidRenderer key={ast.id} asteroid={ast} />
+      ))}
+      {blackHoles.map((bh) => (
+        <BlackHoleRenderer key={bh.id} blackHole={bh} />
+      ))}
+      {pulsars.map((pul) => (
+        <PulsarRenderer key={pul.id} pulsar={pul} />
+      ))}
+      {boosters.map((b) => (
+        <BoosterRenderer key={b.id} booster={b} />
+      ))}
+      {shields.map((sh) => (
+        <ShieldRenderer key={sh.id} shield={sh} />
+      ))}
+      {wormholes.map((w) => (
+        <WormholeRenderer key={w.id} wormhole={w} />
+      ))}
       {planets.map((planet) => (
         <PlanetRenderer key={planet.id} planet={planet} />
       ))}
 
-      {/* Black Holes */}
-      {blackHoles.map((bh) => (
-        <BlackHoleRenderer key={bh.id} blackHole={bh} />
-      ))}
-
-      {/* Asteroid Clouds */}
-      {asteroids.map((ast) => (
-        <AsteroidRenderer key={ast.id} asteroid={ast} />
-      ))}
-
-      {/* Wormholes */}
-      {wormholes.map((wh) => (
-        <WormholeRenderer key={wh.id} wormhole={wh} />
-      ))}
-
-      {/* Pulsars */}
-      {pulsars.map((pul) => (
-        <PulsarRenderer key={pul.id} pulsar={pul} />
-      ))}
-
-      {/* Boosters */}
-      {boosters.map((b) => (
-        <BoosterRenderer key={b.id} booster={b} />
-      ))}
-
-      {/* Shields */}
-      {shields.map((sh) => (
-        <ShieldRenderer key={sh.id} shield={sh} />
-      ))}
-
-
-      {/* Threat Arc */}
+      {/* Enemy AI Aim Arc Threat Highlight */}
       {enemyThreatArcPath && (
-        <path d={enemyThreatArcPath} fill="rgba(239, 68, 68, 0.16)" stroke="rgba(239, 68, 68, 0.45)" strokeWidth="1.5" strokeDasharray="4 3" />
+        <path d={enemyThreatArcPath} fill="rgba(239, 68, 68, 0.18)" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" />
       )}
 
-      {/* Enemy Ship */}
-      <EnemyShipRenderer enemyShip={enemyShip} />
+      {/* Enemy / P2 Ship Renderer */}
+      {enemyShip && <EnemyShipRenderer enemyShip={enemyShip} activeEnemyPath={activeEnemyPath} isDuel={isDuelMode} p2Angle={isP2Turn ? angle : 155} />}
 
-      {/* Enemy Trajectory & Projectile */}
-      {activeEnemyPath.length > 1 && (
-        <polyline
-          points={activeEnemyPath.map((p) => `${p.x},${p.y}`).join(' ')}
-          fill="none"
-          stroke="#ef4444"
-          strokeWidth="3.5"
-          strokeDasharray="6 3"
-          strokeLinecap="round"
-          opacity="0.95"
-        />
-      )}
-
+      {/* Enemy Active Projectile */}
       {enemyProjectilePos && (
         <circle
           cx={enemyProjectilePos.x}
@@ -259,19 +218,18 @@ export function SpaceCanvas({
         />
       )}
 
-      {/* Target Station */}
-      <TargetRenderer target={target} />
+      {/* Target Station (1P Puzzle mode only) */}
+      {!isDuelMode && target && <TargetRenderer target={target} />}
 
       {/* Aiming Vector Line & Drag Handle */}
-      {!isSimulating && turnOwner === 'player' && !roundCompleted && (
+      {!isSimulating && isHumanTurn && !roundCompleted && (
         <g>
-
           <line
-            x1={ship.x}
-            y1={ship.y}
+            x1={activeShip.x}
+            y1={activeShip.y}
             x2={aimVectorEnd.x}
             y2={aimVectorEnd.y}
-            stroke="#f59e0b"
+            stroke={vectorColor}
             strokeWidth="3"
             strokeDasharray="6 4"
             strokeLinecap="round"
@@ -280,8 +238,8 @@ export function SpaceCanvas({
             cx={aimVectorEnd.x}
             cy={aimVectorEnd.y}
             r="16"
-            fill="rgba(245, 158, 11, 0.25)"
-            stroke="#f59e0b"
+            fill={vectorColor === '#06b6d4' ? 'rgba(6, 182, 212, 0.25)' : (vectorColor === '#ef4444' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(245, 158, 11, 0.25)')}
+            stroke={vectorColor}
             strokeWidth="2.5"
             style={{ cursor: 'grab' }}
             onPointerDown={handlePointerDown}
@@ -290,18 +248,18 @@ export function SpaceCanvas({
             cx={aimVectorEnd.x}
             cy={aimVectorEnd.y}
             r="6"
-            fill="#f59e0b"
+            fill={vectorColor}
             style={{ pointerEvents: 'none' }}
           />
         </g>
       )}
 
-      {/* Player Flying Projectile & Trail */}
+      {/* Flying Projectile & Trail */}
       {trail.length > 1 && (
         <polyline
           points={trail.map((p) => `${p.x},${p.y}`).join(' ')}
           fill="none"
-          stroke="#38bdf8"
+          stroke={turnOwner === 'player2' ? '#f97316' : '#38bdf8'}
           strokeWidth="3.5"
           strokeLinecap="round"
         />
@@ -313,16 +271,21 @@ export function SpaceCanvas({
           cy={projectilePos.y}
           r="7"
           fill="#ffffff"
-          stroke="#38bdf8"
+          stroke={turnOwner === 'player2' ? '#f97316' : '#38bdf8'}
           strokeWidth="3"
           filter="url(#planetGlow)"
         />
       )}
 
-      {/* Player Ship */}
+      {/* Player 1 Ship */}
       <g transform={`translate(${ship.x}, ${ship.y})`}>
         <circle r="18" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" strokeWidth="2.5" />
-        <polygon points="0,-10 8,8 -8,8" fill="#3b82f6" transform={`rotate(${angle + 90})`} />
+        <polygon points="0,-10 8,8 -8,8" fill="#3b82f6" transform={`rotate(${!isP2Turn && turnOwner === 'player1' ? angle + 90 : 335 + 90})`} />
+        {isDuelMode && (
+          <text y="32" textAnchor="middle" fill="#38bdf8" fontSize="11" fontWeight="800" letterSpacing="0.5px">
+            Player 1
+          </text>
+        )}
       </g>
 
       {/* Individual Planet Gravity Force Vectors */}

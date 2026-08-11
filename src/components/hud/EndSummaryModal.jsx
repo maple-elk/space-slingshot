@@ -9,13 +9,19 @@ export const EndSummaryModal = memo(function EndSummaryModal({
   level = {},
   pastTrails = [],
   handleNewLevel,
+  gameMode = 'puzzle',
+  onRematch,
 }) {
   if (!roundCompleted) return null;
 
-  const isSuccess = shotOutcome === 'hit_target';
+  const isDuelMode = gameMode === 'duel' || shotOutcome === 'p1_win' || shotOutcome === 'p2_win';
+  const isP1Win = shotOutcome === 'p1_win';
+  const isP2Win = shotOutcome === 'p2_win';
+  const isSuccess = shotOutcome === 'hit_target' || isP1Win || isP2Win;
 
-  const titleText =
-    shotOutcome === 'hit_target'
+  const titleText = isDuelMode
+    ? (isP1Win ? '🏆 PLAYER 1 WINS THE ROUND!' : '🏆 PLAYER 2 WINS THE ROUND!')
+    : (shotOutcome === 'hit_target'
       ? 'Target Reached!'
       : shotOutcome === 'hit_player'
       ? 'Probe Intercepted!'
@@ -23,14 +29,15 @@ export const EndSummaryModal = memo(function EndSummaryModal({
       ? 'Black Hole Collision!'
       : shotOutcome === 'hit_planet'
       ? 'Planet Impact!'
-      : 'Flight Terminated!';
+      : 'Flight Terminated!');
 
-  const iconEmoji =
-    shotOutcome === 'hit_target'
+  const iconEmoji = isDuelMode
+    ? '🏆'
+    : (shotOutcome === 'hit_target'
       ? '🎯'
       : shotOutcome === 'black_hole'
       ? '🕳️'
-      : '💥';
+      : '💥');
 
   const totalShots = pastTrails.length > 0 ? pastTrails.length : shotsTaken;
 
@@ -99,7 +106,7 @@ export const EndSummaryModal = memo(function EndSummaryModal({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             className="btn-primary"
-            onClick={() => handleNewLevel()}
+            onClick={() => (isDuelMode && onRematch ? onRematch() : handleNewLevel())}
             style={{
               padding: '8px 16px',
               fontSize: '0.88rem',
@@ -113,7 +120,7 @@ export const EndSummaryModal = memo(function EndSummaryModal({
             }}
           >
             <Play size={15} />
-            <span>Next Level</span>
+            <span>{isDuelMode ? 'Next Round (New Map)' : 'Next Level'}</span>
             <span
               style={{
                 fontSize: '0.72rem',
@@ -131,8 +138,8 @@ export const EndSummaryModal = memo(function EndSummaryModal({
 
           <button
             className="btn-icon"
-            onClick={() => handleNewLevel()}
-            title="Retry Level"
+            onClick={() => (isDuelMode && onRematch ? onRematch() : handleNewLevel())}
+            title={isDuelMode ? 'Rematch Match' : 'Retry Level'}
             style={{ padding: '8px 10px' }}
           >
             <RotateCcw size={15} />

@@ -39,6 +39,7 @@ export function calculateAimFromPointer(coords, ship) {
 export function useGameInput({
   svgRef,
   ship,
+  enemyShip,
   isSimulating,
   turnOwner,
   roundCompleted,
@@ -51,26 +52,29 @@ export function useGameInput({
   handleStopFlight,
   handleNewLevel,
 }) {
+  const isHumanTurn = turnOwner === 'player' || turnOwner === 'player1' || turnOwner === 'player2';
+  const activeShip = (turnOwner === 'player2' && enemyShip) ? enemyShip : ship;
+
   const updateAimFromPointer = useCallback(
     (e) => {
-      if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
+      if (isSimulating || !isHumanTurn || roundCompleted) return;
       const coords = getSVGCoordinates(svgRef.current, e);
-      const aim = calculateAimFromPointer(coords, ship);
+      const aim = calculateAimFromPointer(coords, activeShip);
       dispatch({ type: 'SET_AIM', angle: aim.angle, power: aim.power });
     },
-    [svgRef, ship, isSimulating, turnOwner, roundCompleted, dispatch]
+    [svgRef, activeShip, isSimulating, isHumanTurn, roundCompleted, dispatch]
   );
 
   const handlePointerDown = useCallback(
     (e) => {
-      if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
+      if (isSimulating || !isHumanTurn || roundCompleted) return;
       dispatch({ type: 'SET_IS_DRAGGING_AIM', value: true });
       if (e.target && typeof e.target.setPointerCapture === 'function') {
         e.target.setPointerCapture(e.pointerId);
       }
       updateAimFromPointer(e);
     },
-    [isSimulating, turnOwner, roundCompleted, dispatch, updateAimFromPointer]
+    [isSimulating, isHumanTurn, roundCompleted, dispatch, updateAimFromPointer]
   );
 
   const handlePointerMove = useCallback(
@@ -105,26 +109,26 @@ export function useGameInput({
           handleNewLevel();
         } else if (isSimulating || gameStatus === 'enemy_flying') {
           handleStopFlight();
-        } else if (turnOwner === 'player') {
+        } else if (isHumanTurn) {
           handleLaunch();
         }
         return;
       }
 
-      if (isSimulating || turnOwner !== 'player' || roundCompleted) return;
+      if (isSimulating || !isHumanTurn || roundCompleted) return;
 
       const step = e.shiftKey ? 5 : 1;
 
-      if (e.code === 'ArrowLeft') {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         e.preventDefault();
         dispatch({ type: 'SET_AIM', angle: (angle - step + 360) % 360 });
-      } else if (e.code === 'ArrowRight') {
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         e.preventDefault();
         dispatch({ type: 'SET_AIM', angle: (angle + step) % 360 });
-      } else if (e.code === 'ArrowUp') {
+      } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
         e.preventDefault();
         dispatch({ type: 'SET_AIM', power: Math.min(60, power + step) });
-      } else if (e.code === 'ArrowDown') {
+      } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
         e.preventDefault();
         dispatch({ type: 'SET_AIM', power: Math.max(10, power - step) });
       }
@@ -136,6 +140,7 @@ export function useGameInput({
     handleLaunch,
     isSimulating,
     gameStatus,
+    isHumanTurn,
     turnOwner,
     roundCompleted,
     handleNewLevel,

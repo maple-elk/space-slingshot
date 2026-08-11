@@ -146,9 +146,17 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       tx = Math.max(minX, Math.min(maxX, tx));
       ty = Math.max(minY, Math.min(maxY, ty));
 
-      const dist = Math.hypot(tx - sx, ty - sy);
-      if (dist >= 220 * Math.sqrt(boardScale)) {
+      if (mode === 'duel') {
+        sx = 140 + rng() * 60;
+        sy = 220 + rng() * 160;
+        tx = 760 + rng() * 60;
+        ty = 220 + rng() * 160;
         validPair = true;
+      } else {
+        const dist = Math.hypot(tx - sx, ty - sy);
+        if (dist >= 220 * Math.sqrt(boardScale)) {
+          validPair = true;
+        }
       }
     } while (!validPair && pairAttempts < 50);
 
@@ -375,17 +383,21 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
     }
 
     let enemyShip = null;
-    if (config.enableEnemyShip) {
-      let ex, ey;
-      let attempts = 0;
-      do {
-        ex = minX + rng() * (maxX - minX);
-        ey = minY + rng() * (maxY - minY);
-        attempts++;
-      } while (
-        (isPositionOccupied(ex, ey, 80 * Math.sqrt(boardScale)) || Math.hypot(ex - ship.x, ey - ship.y) < 160 * Math.sqrt(boardScale)) &&
-        attempts < 120
-      );
+    if (config.enableEnemyShip || mode === 'duel') {
+      let ex = target.x;
+      let ey = target.y;
+
+      if (mode !== 'duel') {
+        let attempts = 0;
+        do {
+          ex = minX + rng() * (maxX - minX);
+          ey = minY + rng() * (maxY - minY);
+          attempts++;
+        } while (
+          (isPositionOccupied(ex, ey, 80 * Math.sqrt(boardScale)) || Math.hypot(ex - ship.x, ey - ship.y) < 160 * Math.sqrt(boardScale)) &&
+          attempts < 120
+        );
+      }
 
       const enemyObj = {
         id: 'enemy_1',
@@ -393,7 +405,7 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
         y: Math.round(ey),
         radius: 20,
         status: 'active',
-        name: 'Enemy Interceptor',
+        name: mode === 'duel' ? 'Player 2 Ship' : 'Enemy Interceptor',
       };
       enemyShip = enemyObj;
       occupiedList.push(enemyObj);
@@ -413,6 +425,10 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       enemyShip,
     };
     candidateLevel.generationMode = mode;
+
+    if (mode === 'duel') {
+      return candidateLevel;
+    }
 
     // Rule 5: Solvability & Difficulty Verification Pass
     const isSolvableCoarse = verifyLevelSolvability(candidateLevel, gravityG);
@@ -663,31 +679,32 @@ export function updateProjectilePhysics(
   };
 }
 
-// Check collisions: 'target', 'hit_enemy', 'hit_player', 'planet', 'black_hole', 'shield_bounce', 'out_of_bounds', or 'none'
+// Check collisions: 'target', 'hit_enemy', 'hit_player', 'hit_p1', 'hit_p2', 'planet', 'black_hole', 'shield_bounce', 'out_of_bounds', or 'none'
 export function checkCollisions(pos, vel, level, shooter = 'player', width = 960, height = 600) {
   const { target, ship, enemyShip, planets = [], blackHoles = [], shields = [] } = level;
 
-  // Check target hit (only player can hit target)
-  if (shooter === 'player' && Math.hypot(pos.x - target.x, pos.y - target.y) <= target.radius + 6) {
+  // Check target hit (only in single player puzzle mode)
+  if (level.generationMode !== 'duel' && shooter === 'player' && target && Math.hypot(pos.x - target.x, pos.y - target.y) <= target.radius + 6) {
     return { type: 'target' };
   }
 
-  // Check player hit enemy ship
+  // Check P1 / Player hit P2 / Enemy ship
   if (
-    shooter === 'player' &&
+    (shooter === 'player' || shooter === 'player1') &&
     enemyShip &&
     enemyShip.status === 'active' &&
     Math.hypot(pos.x - enemyShip.x, pos.y - enemyShip.y) <= enemyShip.radius + 6
   ) {
-    return { type: 'hit_enemy', name: 'Enemy Interceptor' };
+    return { type: shooter === 'player1' ? 'hit_p2' : 'hit_enemy', name: enemyShip.name || 'Enemy Interceptor' };
   }
 
-  // Check enemy hit player ship
+  // Check P2 / Enemy hit P1 ship
   if (
-    shooter === 'enemy' &&
+    (shooter === 'enemy' || shooter === 'player2') &&
+    ship &&
     Math.hypot(pos.x - ship.x, pos.y - ship.y) <= 18
   ) {
-    return { type: 'hit_player', name: 'Your Ship' };
+    return { type: shooter === 'player2' ? 'hit_p1' : 'hit_player', name: 'Player 1 Ship' };
   }
 
   // Check Black Hole Event Horizon hit

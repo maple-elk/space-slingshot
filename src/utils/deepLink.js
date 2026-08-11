@@ -52,10 +52,20 @@ export function parseDeepLinkQuery(searchString) {
   const params = new URLSearchParams(query);
   const parsed = {};
 
-  // Generation Mode ('random' | 'preset' | 'runtime_scored')
+  // Game Mode ('puzzle' | 'duel') & Generation Mode ('random' | 'preset' | 'runtime_scored' | 'duel')
+  const gameModeParam = params.get('gameMode');
+  if (gameModeParam && ['puzzle', 'duel'].includes(gameModeParam.toLowerCase())) {
+    parsed.gameMode = gameModeParam.toLowerCase();
+  }
+
   const modeParam = params.get('mode');
-  if (modeParam && ['random', 'preset', 'runtime_scored'].includes(modeParam.toLowerCase())) {
-    parsed.mapGenerationMode = modeParam.toLowerCase();
+  if (modeParam && ['random', 'preset', 'runtime_scored', 'duel'].includes(modeParam.toLowerCase())) {
+    if (modeParam.toLowerCase() === 'duel') {
+      parsed.gameMode = 'duel';
+      parsed.mapGenerationMode = 'duel';
+    } else {
+      parsed.mapGenerationMode = modeParam.toLowerCase();
+    }
   }
 
   // Tier
@@ -158,6 +168,9 @@ export function parseDeepLinkQuery(searchString) {
  */
 export function buildDeepLinkUrl(state = {}, levelSeed = null, isConfigOpen = false, baseUrl = null) {
   const params = new URLSearchParams();
+
+  const gameMode = state.gameMode || 'puzzle';
+  if (gameMode === 'duel') params.set('gameMode', 'duel');
 
   const mode = state.mapGenerationMode || state.level?.generationMode;
   if (mode && mode !== 'random') params.set('mode', mode);

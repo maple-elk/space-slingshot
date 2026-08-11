@@ -25,6 +25,9 @@ export default function SpaceSlingshot({
   const svgRef = useRef(null);
 
   const {
+    gameMode = 'puzzle',
+    p1Score = 0,
+    p2Score = 0,
     angle,
     power,
     isDraggingAim,
@@ -165,6 +168,7 @@ export default function SpaceSlingshot({
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useGameInput({
     svgRef,
     ship,
+    enemyShip: level.enemyShip,
     isSimulating,
     turnOwner,
     roundCompleted,
@@ -257,6 +261,10 @@ export default function SpaceSlingshot({
         handleLaunch={handleLaunch}
         handleStopFlight={handleStopFlight}
         level={level}
+        gameMode={gameMode}
+        onToggleGameMode={() => dispatch({ type: 'SET_GAME_MODE' })}
+        p1Score={p1Score}
+        p2Score={p2Score}
       />
 
       {/* Main Game Stage Area */}
@@ -321,6 +329,8 @@ export default function SpaceSlingshot({
           pastTrails={pastTrails}
           handleNewLevel={() => handleNewLevel()}
           onDismiss={() => dispatch({ type: 'DISMISS_SUMMARY' })}
+          gameMode={gameMode}
+          onRematch={() => dispatch({ type: 'REMATCH_DUEL' })}
         />
       )}
 

@@ -10,6 +10,8 @@ export default function Navbar({
   onSelectDimensionMode,
   enableSolarOrbit = false,
   onToggleSolarOrbit,
+  gameMode = 'puzzle',
+  onToggleGameMode,
 }) {
   // Compute active dimension mode ('2d' | '3d' | 'solar')
   const currentMode = dimensionMode !== '2d' ? dimensionMode : (enableSolarOrbit ? 'solar' : '2d');
@@ -66,6 +68,27 @@ export default function Navbar({
             <span>⏳ Time Dimensions</span>
           </button>
         </div>
+
+        {/* 1P Puzzle vs 2P Duel Toggle Button */}
+        {onToggleGameMode && (
+          <button
+            className="btn-icon"
+            onClick={onToggleGameMode}
+            title={gameMode === 'duel' ? 'Switch to 1P Puzzle Mode' : 'Switch to 2P Local Slingshot Duel Mode'}
+            style={{
+              padding: '5px 12px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              background: gameMode === 'duel' ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(245, 158, 11, 0.4))' : 'rgba(59, 130, 246, 0.25)',
+              border: '1px solid',
+              borderColor: gameMode === 'duel' ? '#ef4444' : '#3b82f6',
+              color: gameMode === 'duel' ? '#fef08a' : '#93c5fd',
+              borderRadius: '8px',
+            }}
+          >
+            <span>{gameMode === 'duel' ? '⚔️ 2P Duel Active' : '🧩 Mode: 1P Puzzle'}</span>
+          </button>
+        )}
 
         <button
           className={`btn-icon ${isFullscreen ? 'active' : ''}`}

@@ -113,14 +113,16 @@ export function useGameLoop({
     }, 850);
   }, [enemyShip, ship, gravityG, simSpeedScale, updateCameraTarget, dispatch]);
 
-  // Finalize player shot and trigger enemy turn if applicable
+  // Finalize shot and trigger enemy turn if single player vs AI
   const finalizeShot = useCallback(
     (status, finalTrail) => {
       updateCameraTarget(null);
-      dispatch({ type: 'END_SHOT', status, finalTrail });
+      const isDuel = levelRef.current?.generationMode === 'duel' || turnOwner === 'player1' || turnOwner === 'player2';
+      dispatch({ type: 'END_SHOT', status, finalTrail, shooter: turnOwner });
 
       const currentLvl = levelRef.current;
       if (
+        !isDuel &&
         status !== 'hit_target' &&
         status !== 'hit_enemy' &&
         enableEnemyShip &&
@@ -130,7 +132,7 @@ export function useGameLoop({
         triggerEnemyTurn();
       }
     },
-    [enableEnemyShip, triggerEnemyTurn, updateCameraTarget, dispatch]
+    [enableEnemyShip, triggerEnemyTurn, updateCameraTarget, dispatch, turnOwner]
   );
 
   // Manually stop active flight
@@ -147,10 +149,11 @@ export function useGameLoop({
     }
   }, [gameStatus, finalizeShot, updateCameraTarget, dispatch]);
 
-  // Launch player projectile
+  // Launch projectile (for P1, P2, or single player)
   const handleLaunch = useCallback(() => {
     const isSimulating = gameStatus === 'flying' || gameStatus === 'enemy_flying';
-    if (isSimulating || turnOwner !== 'player') return;
+    const isAllowedTurn = turnOwner === 'player' || turnOwner === 'player1' || turnOwner === 'player2';
+    if (isSimulating || !isAllowedTurn) return;
 
     if (roundCompleted) {
       handleNewLevel();
@@ -164,17 +167,17 @@ export function useGameLoop({
     const vy = (power / 4.8) * Math.sin(rad);
 
     const initialVel = { x: vx, y: vy };
-    const startPos = { x: ship.x, y: ship.y };
+    const startPos = turnOwner === 'player2' && enemyShip ? { x: enemyShip.x, y: enemyShip.y } : { x: ship.x, y: ship.y };
 
     posRef.current = startPos;
     velRef.current = initialVel;
     localTrailRef.current = [startPos];
     warpCooldownRef.current = 0;
 
-    dispatch({ type: 'LAUNCH_PLAYER', pos: startPos, vel: initialVel });
-  }, [gameStatus, turnOwner, roundCompleted, angle, power, ship, handleNewLevel, dispatch]);
+    dispatch({ type: 'LAUNCH_PLAYER', pos: startPos, vel: initialVel, turnOwner });
+  }, [gameStatus, turnOwner, roundCompleted, angle, power, ship, enemyShip, handleNewLevel, dispatch]);
 
-  // Player Physics Animation Loop
+  // Physics Animation Loop
   useEffect(() => {
     if (gameStatus !== 'flying') return;
 
@@ -208,7 +211,7 @@ export function useGameLoop({
       localTrailRef.current.push(pt);
       updateCameraTarget(result.pos);
 
-      const collision = checkCollisions(result.pos, result.vel, activeLvl, 'player', 960, 600);
+      const collision = checkCollisions(result.pos, result.vel, activeLvl, turnOwner, 960, 600);
 
       if (collision.type === 'target') {
         gameEvents.emit('VICTORY');
@@ -216,9 +219,15 @@ export function useGameLoop({
         return;
       }
 
-      if (collision.type === 'hit_enemy') {
+      if (collision.type === 'hit_enemy' || collision.type === 'hit_p2') {
         gameEvents.emit('VICTORY');
-        finalizeShot('hit_enemy', localTrailRef.current);
+        finalizeShot(collision.type, localTrailRef.current);
+        return;
+      }
+
+      if (collision.type === 'hit_player' || collision.type === 'hit_p1') {
+        gameEvents.emit('VICTORY');
+        finalizeShot(collision.type, localTrailRef.current);
         return;
       }
 
@@ -252,7 +261,7 @@ export function useGameLoop({
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [gameStatus, gravityG, simSpeedScale, finalizeShot, updateCameraTarget, dispatch]);
+  }, [gameStatus, gravityG, simSpeedScale, finalizeShot, updateCameraTarget, dispatch, turnOwner]);
 
   return {
     handleLaunch,
