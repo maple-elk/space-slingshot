@@ -58,6 +58,9 @@ const TIER_CONFIG = {
  */
 function isStructurallySimilar(candidate, catalog, minDistanceThreshold = 80) {
   for (const preset of catalog) {
+    if (preset.seed === candidate.seed) {
+      return true; // Exact seed match
+    }
     let pointDiffSum = 0;
     let pointCount = 0;
 

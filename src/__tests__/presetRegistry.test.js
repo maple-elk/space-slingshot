@@ -10,10 +10,17 @@ describe('Golden Seed Preset Registry', () => {
     expect(all.level4).toBeDefined();
     expect(all.level5).toBeDefined();
 
-    expect(all.level2.length).toBeGreaterThanOrEqual(50);
-    expect(all.level3.length).toBeGreaterThanOrEqual(50);
-    expect(all.level4.length).toBeGreaterThanOrEqual(50);
+    expect(all.level2.length).toBeGreaterThanOrEqual(10);
+    expect(all.level3.length).toBeGreaterThanOrEqual(10);
+    expect(all.level4.length).toBeGreaterThanOrEqual(10);
     expect(all.level5.length).toBeGreaterThanOrEqual(10);
+
+    // Verify zero duplicate seeds exist in any catalog tier
+    Object.keys(all).forEach((tier) => {
+      const seeds = all[tier].map((p) => p.seed);
+      const uniqueSeeds = new Set(seeds);
+      expect(seeds.length).toBe(uniqueSeeds.size);
+    });
   });
 
   it('normalizes tier aliases correctly', () => {

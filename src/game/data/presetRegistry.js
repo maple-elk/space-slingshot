@@ -3,19 +3,35 @@ import presetsLevel3 from './presets_level3.json';
 import presetsLevel4 from './presets_level4.json';
 import presetsLevel5 from './presets_level5.json';
 
+function dedupePresets(list) {
+  if (!Array.isArray(list)) return [];
+  const seen = new Set();
+  return list.filter((item) => {
+    if (!item || item.seed === undefined) return true;
+    if (seen.has(item.seed)) return false;
+    seen.add(item.seed);
+    return true;
+  });
+}
+
+const level2Clean = dedupePresets(presetsLevel2);
+const level3Clean = dedupePresets(presetsLevel3);
+const level4Clean = dedupePresets(presetsLevel4);
+const level5Clean = dedupePresets(presetsLevel5);
+
 const CATALOGS = {
-  level2: presetsLevel2,
-  level3: presetsLevel3,
-  level4: presetsLevel4,
-  level5: presetsLevel5,
+  level2: level2Clean,
+  level3: level3Clean,
+  level4: level4Clean,
+  level5: level5Clean,
 
   // Friendly aliases
-  easy: presetsLevel2,
-  medium: presetsLevel3,
-  hard: presetsLevel4,
-  extreme: presetsLevel4,
-  nightmare: presetsLevel4,
-  singularity: presetsLevel5,
+  easy: level2Clean,
+  medium: level3Clean,
+  hard: level4Clean,
+  extreme: level4Clean,
+  nightmare: level4Clean,
+  singularity: level5Clean,
 };
 
 /**
@@ -38,10 +54,10 @@ export function normalizeTierKey(tier = 'level2') {
  */
 export function getAllGoldenPresets() {
   return {
-    level2: presetsLevel2,
-    level3: presetsLevel3,
-    level4: presetsLevel4,
-    level5: presetsLevel5,
+    level2: level2Clean,
+    level3: level3Clean,
+    level4: level4Clean,
+    level5: level5Clean,
   };
 }
 
