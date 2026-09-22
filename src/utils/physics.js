@@ -63,7 +63,14 @@ export function generateRandomLevel(width = 960, height = 600, config = {}) {
       if (config.enableEnemyShip === false) {
         level.enemyShip = null;
       } else if (config.enableEnemyShip && !level.enemyShip) {
-        level.enemyShip = { x: 750, y: 150, radius: 20, isAlive: true };
+        level.enemyShip = {
+          id: 'enemy_1',
+          x: 750,
+          y: 150,
+          radius: 20,
+          status: 'active',
+          name: 'Enemy Interceptor',
+        };
       }
 
       if (config.enableBlackHoles === false) {
@@ -504,7 +511,7 @@ export function calculateEnemyAim(enemyShip, playerShip, level, gravityG = DEFAU
     // Direct pressure with humanized ±12° scatter
     const errorDeg = (Math.random() * 24 - 12);
     finalAngle = directAngle + (errorDeg * Math.PI) / 180;
-    finalPower = 42 + Math.random() * 25;
+    finalPower = 35 + Math.random() * 15;
   } else if (chosenArchetype === 'slingshot') {
     // Slingshot around nearest planet's gravity well
     const { planets = [] } = level;
@@ -519,16 +526,16 @@ export function calculateEnemyAim(enemyShip, playerShip, level, gravityG = DEFAU
       const pAngle = Math.atan2(nearestPlanet.y - enemyShip.y, nearestPlanet.x - enemyShip.x);
       const tangentOffset = (Math.random() > 0.5 ? 1 : -1) * 0.35;
       finalAngle = pAngle + tangentOffset;
-      finalPower = 48 + Math.random() * 28;
+      finalPower = 38 + Math.random() * 16;
     } else {
       finalAngle = directAngle + ((Math.random() * 30 - 15) * Math.PI) / 180;
-      finalPower = 55;
+      finalPower = 45;
     }
   } else if (chosenArchetype === 'lob') {
-    // Deep Space Lob (high angle offset, high power 75-90)
+    // Deep Space Lob (high angle offset, moderate power)
     const lobOffsetDeg = Math.random() > 0.5 ? (40 + Math.random() * 30) : -(40 + Math.random() * 30);
     finalAngle = directAngle + (lobOffsetDeg * Math.PI) / 180;
-    finalPower = 72 + Math.random() * 20;
+    finalPower = 45 + Math.random() * 15;
   }
 
   const finalAngleDeg = Math.round(((finalAngle * 180) / Math.PI + 360) % 360);

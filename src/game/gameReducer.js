@@ -326,7 +326,14 @@ export function gameReducer(state, action) {
         enemyTrail: [...state.enemyTrail, action.pos],
       };
 
-    case 'END_ENEMY_SHOT':
+    case 'END_ENEMY_SHOT': {
+      const trailPoints = action.finalTrail || state.enemyTrail;
+      const newPastTrail = {
+        id: `${Date.now()}_enemy_${state.pastTrails.length}`,
+        points: trailPoints,
+        status: action.status,
+        shooter: 'enemy',
+      };
       return {
         ...state,
         gameStatus: action.status,
@@ -335,9 +342,11 @@ export function gameReducer(state, action) {
         enemyProjectilePos: null,
         enemyProjectileVel: null,
         enemyTrail: (state.level.enemyShip && state.level.enemyShip.status === 'active') ? state.enemyTrail : [],
+        pastTrails: trailPoints && trailPoints.length > 1 ? [...state.pastTrails, newPastTrail] : state.pastTrails,
         roundCompleted: action.status === 'hit_player',
         showEndSummary: action.status === 'hit_player',
       };
+    }
 
     case 'RESET_LEVEL': {
       const lvl = action.newLevel;

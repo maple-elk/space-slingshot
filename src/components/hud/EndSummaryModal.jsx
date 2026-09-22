@@ -106,7 +106,12 @@ export const EndSummaryModal = memo(function EndSummaryModal({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             className="btn-primary"
-            onClick={() => (isDuelMode && onRematch ? onRematch() : handleNewLevel())}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              if (isDuelMode && onRematch) onRematch();
+              else handleNewLevel();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             style={{
               padding: '8px 16px',
               fontSize: '0.88rem',
@@ -138,7 +143,12 @@ export const EndSummaryModal = memo(function EndSummaryModal({
 
           <button
             className="btn-icon"
-            onClick={() => (isDuelMode && onRematch ? onRematch() : handleNewLevel())}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              if (isDuelMode && onRematch) onRematch();
+              else handleNewLevel();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             title={isDuelMode ? 'Rematch Match' : 'Retry Level'}
             style={{ padding: '8px 10px' }}
           >

@@ -46,7 +46,11 @@ export function SlingshotTelemetryBar({
         {onToggleGameMode && (
           <button
             className="btn-icon"
-            onClick={onToggleGameMode}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onToggleGameMode();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             title={isDuel ? 'Switch to 1P Puzzle Mode' : 'Switch to 2P Local Slingshot Duel Mode'}
             style={{
               padding: '4px 10px',

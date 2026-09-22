@@ -158,7 +158,7 @@ export function SpaceCanvas({
             ? '#f97316'
             : (past.status === 'hit_target' || past.status === 'hit_enemy' || past.status === 'hit_p2'
             ? '#10b981'
-            : past.status === 'hit_player' || past.status === 'hit_p1'
+            : past.status === 'hit_player' || past.status === 'hit_p1' || past.shooter === 'enemy'
             ? '#ef4444'
             : '#38bdf8');
         return (
@@ -204,6 +204,19 @@ export function SpaceCanvas({
 
       {/* Enemy / P2 Ship Renderer */}
       {enemyShip && <EnemyShipRenderer enemyShip={enemyShip} activeEnemyPath={activeEnemyPath} isDuel={isDuelMode} p2Angle={isP2Turn ? angle : 155} />}
+
+      {/* Enemy Flight Trajectory Trail */}
+      {enemyTrail && enemyTrail.length > 1 && (
+        <polyline
+          points={enemyTrail.map((p) => `${p.x},${p.y}`).join(' ')}
+          fill="none"
+          stroke="#ef4444"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="4 2"
+          filter="url(#planetGlow)"
+        />
+      )}
 
       {/* Enemy Active Projectile */}
       {enemyProjectilePos && (

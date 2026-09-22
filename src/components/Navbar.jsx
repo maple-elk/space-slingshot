@@ -73,7 +73,11 @@ export default function Navbar({
         {onToggleGameMode && (
           <button
             className="btn-icon"
-            onClick={onToggleGameMode}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onToggleGameMode();
+            }}
+            onMouseDown={(e) => e.preventDefault()}
             title={gameMode === 'duel' ? 'Switch to 1P Puzzle Mode' : 'Switch to 2P Local Slingshot Duel Mode'}
             style={{
               padding: '5px 12px',

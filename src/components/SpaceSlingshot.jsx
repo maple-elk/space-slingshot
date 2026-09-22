@@ -95,8 +95,12 @@ export default function SpaceSlingshot({
       setIsGeneratingLevel(true);
       setTimeout(() => {
         const bScale = customConfig?.boardScale !== undefined ? customConfig.boardScale : boardScale;
+        const isDuel = gameMode === 'duel';
+        const fallbackGenMode = mapGenerationMode === 'duel' ? 'random' : (mapGenerationMode || 'random');
+        const genMode = customConfig?.generationMode || (isDuel ? 'duel' : fallbackGenMode);
+
         const cfg = {
-          generationMode: customConfig?.generationMode || mapGenerationMode,
+          generationMode: genMode,
           planetCount,
           massMult,
           boardScale: bScale,
@@ -107,7 +111,7 @@ export default function SpaceSlingshot({
           enablePulsars: enablePulsars || undefined,
           enableBoosters: enableBoosters || undefined,
           enableShields: enableShields || undefined,
-          enableEnemyShip: enableEnemyShip || undefined,
+          enableEnemyShip: isDuel ? true : (enableEnemyShip || undefined),
           ...customConfig,
         };
 
@@ -121,6 +125,8 @@ export default function SpaceSlingshot({
     },
     [
       boardScale,
+      gameMode,
+      mapGenerationMode,
       planetCount,
       massMult,
       difficultyTier,
@@ -150,19 +156,6 @@ export default function SpaceSlingshot({
     updateCameraTarget,
     handleNewLevel,
   });
-
-  // Global Spacebar Key Listener to continue to next level when round is completed
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.code === 'Space' && roundCompleted) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        e.preventDefault();
-        handleNewLevel();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [roundCompleted, handleNewLevel]);
 
   // Pointer & Keyboard Input System for 2D
   const { handlePointerDown, handlePointerMove, handlePointerUp } = useGameInput({

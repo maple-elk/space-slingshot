@@ -74,7 +74,9 @@ export function calculateSmartEnemyAim(
     candidateAngles.push((baseAngleDeg + offset + 360) % 360);
   }
 
-  const candidatePowers = [40, 60, 85, 115, 145, 175];
+  // Sample realistic slingshot powers: moderate speeds that produce dramatic, visible gravitational arcs
+  // Powers 30-85 allow slingshots around heavy obstacles without straight-line laser distortion
+  const candidatePowers = [30, 40, 50, 60, 75, 85];
   const validCandidates = [];
 
   for (const angleDeg of candidateAngles) {
@@ -97,19 +99,20 @@ export function calculateSmartEnemyAim(
         power,
         outcome: sim.outcome,
         minDistance: sim.minDistance,
+        totalTurnDeg: sim.totalTurnDeg || 0,
       });
     }
   }
 
   if (validCandidates.length === 0) {
-    // Fallback direct line aim
+    // Fallback moderate speed direct aim (allows gravity to act on the projectile)
     const rad = (baseAngleDeg * Math.PI) / 180;
     return {
       archetype: 'direct',
       archetypeName: '🚀 Direct Intercept',
       angleDeg: Math.round(baseAngleDeg),
-      power: 80,
-      initialVel: { x: (80 / 4.8) * Math.cos(rad), y: (80 / 4.8) * Math.sin(rad) },
+      power: 45,
+      initialVel: { x: (45 / 4.8) * Math.cos(rad), y: (45 / 4.8) * Math.sin(rad) },
       simOutcome: 'out_of_bounds',
       minDistance: Math.round(Math.hypot(dx, dy)),
     };
@@ -118,6 +121,7 @@ export function calculateSmartEnemyAim(
   // Categorize candidates for varied gameplay
   const directHits = validCandidates.filter((c) => c.outcome === 'hit_player');
   const closeCalls = validCandidates.filter((c) => c.minDistance >= 30 && c.minDistance <= 110);
+  // Sort general shots by a balance of proximity and gravitational curvature
   const generalShots = [...validCandidates].sort((a, b) => a.minDistance - b.minDistance);
 
   // Deterministic seed choice based on level seed & positions to prevent jitter
@@ -132,16 +136,12 @@ export function calculateSmartEnemyAim(
     selected = closeCalls[idx];
     archetypeName = '⚡ Close Call Sweeping Pass';
   } else if (seedHash < 0.70 && directHits.length > 0) {
-    // 30% chance: Direct hit attempt with slight natural variance (+/- 2.5 deg)
-    const rawHit = directHits[Math.floor(((seedHash - 0.40) / 0.30) * directHits.length)];
-    const angleOffset = (seedHash > 0.55 ? 2.5 : -2.5);
-    selected = {
-      ...rawHit,
-      angleDeg: (rawHit.angleDeg + angleOffset + 360) % 360,
-    };
+    // 30% chance: Exact calculated gravity hit on player
+    const idx = Math.floor(((seedHash - 0.40) / 0.30) * directHits.length);
+    selected = directHits[idx];
     archetypeName = '🎯 Targeted Intercept';
   } else {
-    // 30% chance: Pick top 3 closest trajectory arc
+    // 30% chance: Pick from closest gravitational trajectory arcs
     const topIdx = Math.min(2, Math.floor(((seedHash - 0.70) / 0.30) * generalShots.length));
     selected = generalShots[topIdx] || generalShots[0];
     archetypeName = '🪐 Gravity Arc Attempt';

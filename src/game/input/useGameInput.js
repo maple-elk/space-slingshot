@@ -104,6 +104,12 @@ export function useGameInput({
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' || e.key === ' ') {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) {
+          return;
+        }
+        if (e.target && e.target.tagName === 'BUTTON') {
+          e.target.blur();
+        }
         e.preventDefault();
         if (roundCompleted) {
           handleNewLevel();
